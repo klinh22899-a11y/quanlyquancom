@@ -803,7 +803,7 @@ app.put('/api/change-password', async (req, res) => {
 async function startServer() {
     await connectDB();
     app.listen(PORT, () => {
-        console.log(`\n🚀 Server chạy tại: http://localhost:${PORT}`);
+        console.log(`\n🚀 Server chạy tại: https://quanlyquancm.onrender.com`);
         console.log(`📋 API Test: http://localhost:${PORT}/api/test`);
         console.log(`🔍 API Tra cứu phiếu: http://localhost:${PORT}/api/tracuu/phieu/PG01`);
         console.log(`🧾 API Tra cứu hóa đơn: http://localhost:${PORT}/api/tracuu/hoadon/HD01`);
