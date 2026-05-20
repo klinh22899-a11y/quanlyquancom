@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhân viên - Cơm thố Anh Nguyễn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { transition: all 0.2s ease; }
+        body { background: #121212; color: #e5e5e5; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .bg-card { background: #1e1e1e !important; }
+        .tab-active { border-bottom: 3px solid #f59e0b; color: #f59e0b; }
+        .table-card { background: #232323; border: 1px solid #333; cursor: pointer; transition: all 0.2s; }
+        .table-card:hover { background: #2a2a2a; transform: translateY(-2px); }
+        .table-card.occupied { background: #33261a; border-left: 4px solid #ff9f43; }
+        .table-card.selected { background: #ff8c42; color: #121212; }
+        .menu-item { background: #232323; border: 1px solid #333; cursor: pointer; transition: all 0.2s; }
+        .menu-item:hover { background: #33261a; border-color: #ff8c42; transform: translateX(4px); }
+        .category-active { background: #ff8c42; color: #121212; }
+        .btn-primary { background: #ff8c42; color: #121212; font-weight: bold; transition: all 0.2s; }
+        .btn-primary:hover { background: #e07a2e; transform: translateY(-1px); }
+        .btn-secondary { background: #2a2a2a; border: 1px solid #444; color: #e5e5e5; }
+        .btn-secondary:hover { background: #3a3a3a; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-warning { background: #f59e0b; color: #121212; }
+        .btn-warning:hover { background: #e07a2e; }
+        .order-item { background: #232323; border-radius: 12px; margin-bottom: 12px; transition: all 0.2s; }
+        .order-item:hover { background: #2a2a2a; }
+        .status-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+        .status-processing { background: #f59e0b20; color: #f59e0b; border: 1px solid #f59e0b40; }
+        .status-served { background: #10b98120; color: #10b981; border: 1px solid #10b98140; }
+        .status-closed { background: #6b728020; color: #9ca3af; border: 1px solid #6b728040; }
+        .user-dropdown { position: relative; display: inline-block; }
+        .dropdown-content { display: none; position: absolute; right: 0; top: 45px; background: #1e1e1e; min-width: 220px; border-radius: 12px; border: 1px solid #333; z-index: 100; }
+        .dropdown-content a { color: #e5e5e5; padding: 10px 16px; display: block; font-size: 14px; text-decoration: none; }
+        .dropdown-content a:hover { background: #2a2a2a; }
+        .user-dropdown:hover .dropdown-content { display: block; }
+        input, select { background: #2a2a2a; border: 1px solid #444; color: #e5e5e5; border-radius: 8px; padding: 8px 12px; outline: none; }
+        input:focus, select:focus { border-color: #ff8c42; }
+        .search-box { position: relative; width: 100%; }
+        .search-box input { width: 100%; padding: 8px 16px 8px 35px; background: #2a2a2a; border: 1px solid #444; border-radius: 20px; }
+        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #888; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #2a2a2a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #ff8c42; border-radius: 4px; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: #1e1e1e; border-radius: 20px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; padding: 24px; border: 1px solid #333; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #10b981; color: white; padding: 12px 24px; border-radius: 8px; z-index: 2000; animation: slideIn 0.3s ease; }
+        .toast.error { background: #dc2626; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        /* Chat AI Styles */
+        .chat-bubble { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; background: linear-gradient(135deg, #ff8c42, #ff6b35); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 20px rgba(255,140,66,0.4); z-index: 100; transition: all 0.3s; }
+        .chat-bubble:hover { transform: scale(1.1); }
+        .chat-window { position: fixed; bottom: 90px; right: 24px; width: 400px; height: 550px; background: #1e1e2e; border-radius: 20px; display: none; flex-direction: column; overflow: hidden; z-index: 101; border: 1px solid #ff8c42; }
+        .chat-header { background: linear-gradient(135deg, #ff8c42, #ff6b35); color: white; padding: 12px 16px; font-weight: bold; }
+        .chat-messages { flex: 1; padding: 12px; overflow-y: auto; background: #2a2a3e; font-size: 13px; }
+        .chat-input-area { display: flex; padding: 12px; background: #1e1e2e; border-top: 1px solid #3a3a4e; gap: 8px; flex-direction: column; }
+        .chat-input-row { display: flex; gap: 8px; }
+        .chat-input-area input { flex: 1; padding: 10px 14px; background: #3a3a4e; border: none; border-radius: 25px; color: white; outline: none; }
+        .chat-input-area button { background: #ff8c42; color: white; border: none; border-radius: 25px; padding: 10px 18px; cursor: pointer; font-weight: bold; }
+        .quick-replies { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .quick-reply-btn { background: #2a2a3a; border: 1px solid #ff8c42; color: #ff8c42; padding: 6px 12px; border-radius: 20px; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+        .quick-reply-btn:hover { background: #ff8c42; color: #121212; }
+        .message-user { text-align: right; margin-bottom: 12px; }
+        .message-user span { background: #ff8c42; color: white; padding: 8px 14px; border-radius: 18px 18px 4px 18px; display: inline-block; max-width: 80%; }
+        .message-ai { text-align: left; margin-bottom: 12px; }
+        .message-ai span { background: #3a3a4e; color: #e5e5e5; padding: 8px 14px; border-radius: 18px 18px 18px 4px; display: inline-block; max-width: 80%; }
+        .search-results-panel { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #1e1e1e; border: 1px solid #ff8c42; border-radius: 16px; padding: 12px; z-index: 200; max-height: 300px; overflow-y: auto; display: none; }
+        .search-results-panel.show { display: block; }
+        .search-result-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #333; cursor: pointer; border-radius: 8px; }
+        .search-result-item:hover { background: #2a2a2a; }
+        .search-result-price { color: #ff8c42; font-weight: bold; }
+        .phieu-code { font-family: monospace; font-size: 12px; background: #2a2a2a; padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="bg-[#1a1a1a] px-6 py-3 flex justify-between items-center border-b border-gray-800">
+        <div class="flex items-center gap-4">
+            <i class="fas fa-utensils text-2xl text-[#ff8c42]"></i>
+            <h1 class="text-xl font-bold">Cơm thố Anh Nguyễn - Nhân viên</h1>
+        </div>
+        <div class="user-dropdown">
+            <button class="flex items-center gap-2 bg-[#2a2a2a] px-3 py-1 rounded-full">
+                <i class="fas fa-user-circle text-xl text-[#ff8c42]"></i>
+                <span class="text-sm" id="userName">Đang tải...</span>
+                <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+            <div class="dropdown-content">
+                <a href="#" onclick="showInfo()"><i class="fas fa-user mr-2"></i>Thông tin tài khoản</a>
+                <a href="#" onclick="showDailyReport()"><i class="fas fa-chart-line mr-2"></i>📊 Báo cáo cuối ngày</a>
+                <hr class="my-1 border-gray-700">
+                <a href="#" class="text-red-400" onclick="logout()"><i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Tabs with Search -->
+    <div class="flex items-center justify-between bg-[#1a1a1a] border-b border-gray-800 px-6">
+        <div class="flex">
+            <button id="tabPhongBanBtn" class="px-4 py-2 font-medium tab-active">🏠 Phòng bàn</button>
+            <button id="tabThucDonBtn" class="px-4 py-2 font-medium text-gray-400">🍽️ Thực đơn</button>
+            <button id="tabTraCuuBtn" class="px-4 py-2 font-medium text-gray-400">🔍 Tra cứu</button>
+        </div>
+        <div class="search-box w-80">
+            <i class="fas fa-search"></i>
+            <input type="text" id="globalSearchMon" placeholder="🔍 Tìm món (gõ bất cứ đâu)..." autocomplete="off">
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="p-4 flex gap-4">
+        <!-- Left Panel -->
+        <div class="w-[70%]">
+            <!-- Phòng bàn Panel -->
+            <div id="phongBanPanel" class="tab-panel">
+                <div class="bg-card rounded-xl p-4 shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-bold text-lg"><i class="fas fa-table mr-2 text-[#ff8c42]"></i>Danh sách bàn</h2>
+                        <div class="flex gap-4 text-sm">
+                            <span><i class="fas fa-table"></i> Tất cả: <span id="totalTables">0</span></span>
+                            <span><i class="fas fa-utensils text-[#ff8c42]"></i> Đang phục vụ: <span id="occupiedTables">0</span></span>
+                            <span><i class="fas fa-check-circle text-green-500"></i> Trống: <span id="emptyTables">0</span></span>
+                        </div>
+                    </div>
+                    <div class="search-box mb-4">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchTable" placeholder="🔍 Tra cứu bàn (tên hoặc mã)" class="w-full">
+                    </div>
+                    <div id="tableList" class="grid grid-cols-5 gap-3 max-h-[500px] overflow-auto"></div>
+                </div>
+            </div>
+
+            <!-- Thực đơn Panel -->
+            <div id="thucDonPanel" class="tab-panel hidden">
+                <div class="flex gap-4">
+                    <div class="w-64 bg-card rounded-xl p-3 shadow-lg">
+                        <h3 class="font-bold mb-2"><i class="fas fa-list mr-1 text-[#ff8c42]"></i>Danh mục</h3>
+                        <div id="categoryList" class="space-y-1 max-h-[400px] overflow-auto"></div>
+                    </div>
+                    <div class="flex-1 bg-card rounded-xl p-3 shadow-lg">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold"><i class="fas fa-pizza-slice mr-1 text-[#ff8c42]"></i>Thực đơn</h3>
+                            <div class="text-sm text-gray-400" id="selectedBanInfo">🏠 Chưa chọn bàn</div>
+                        </div>
+                        <div id="menuList" class="grid grid-cols-2 gap-3 max-h-[450px] overflow-auto"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tra cứu Panel -->
+            <div id="traCuuPanel" class="tab-panel hidden">
+                <div class="flex gap-4">
+                    <!-- Tra cứu Phiếu -->
+                    <div class="flex-1 bg-card rounded-xl p-4 shadow-lg">
+                        <h3 class="font-bold text-lg mb-3"><i class="fas fa-receipt mr-2 text-[#ff8c42]"></i>Tra cứu Phiếu gọi món</h3>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="searchMaPhieu" placeholder="Nhập mã phiếu (VD: PG01)" class="flex-1">
+                            <button id="btnTraCuuPhieu" class="btn-primary px-4 py-2 rounded-lg"><i class="fas fa-search mr-1"></i>Tìm</button>
+                        </div>
+                        <div id="phieuDetail" class="mt-4 hidden">
+                            <div class="bg-[#2a2a2a] rounded-lg p-4">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h4 class="font-bold text-[#ff8c42] text-lg" id="phieuMa">-</h4>
+                                        <p class="text-sm text-gray-400" id="phieuThoiGian">-</p>
+                                    </div>
+                                    <span id="phieuTrangThaiBadge" class="status-badge status-processing">-</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 mb-3 text-sm">
+                                    <div><span class="text-gray-400">Bàn:</span> <span id="phieuBan" class="font-medium">-</span></div>
+                                    <div><span class="text-gray-400">Nhân viên:</span> <span id="phieuNV" class="font-medium">-</span></div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="text-gray-400 text-sm mb-2">📝 Ghi chú:</div>
+                                    <div id="phieuGhiChu" class="text-sm bg-[#1e1e1e] p-2 rounded">-</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="text-gray-400 text-sm mb-2">🍽️ Danh sách món:</div>
+                                    <div class="overflow-auto max-h-52">
+                                        <table class="w-full text-sm">
+                                            <thead class="text-gray-400 border-b border-gray-600">
+                                                <tr><th class="text-left py-2">Món</th><th class="text-center">SL</th><th class="text-right">Đơn giá</th><th class="text-right">Thành tiền</th></tr>
+                                            </thead>
+                                            <tbody id="phieuItemsTable"></tbody>
+                                            <tfoot class="border-t border-gray-600">
+                                                <tr><td colspan="3" class="text-right py-2 font-bold">Tổng cộng:</td><td class="text-right font-bold text-[#ff8c42]" id="phieuTotal">0₫</td></tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 mt-3 pt-3 border-t border-gray-600">
+                                    <button id="btnClosePhieuTraCuu" class="flex-1 btn-warning py-2 rounded-lg text-sm"><i class="fas fa-lock mr-1"></i>Đóng phiếu</button>
+                                    <button id="btnPrintPhieuTraCuu" class="flex-1 btn-success py-2 rounded-lg text-sm"><i class="fas fa-print mr-1"></i>In phiếu</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="phieuNotFound" class="text-center py-8 text-gray-400 hidden">
+                            <i class="fas fa-search text-4xl mb-2"></i>
+                            <p>Không tìm thấy phiếu. Vui lòng kiểm tra lại mã phiếu.</p>
+                        </div>
+                    </div>
+
+                    <!-- Tra cứu Hóa đơn -->
+                    <div class="flex-1 bg-card rounded-xl p-4 shadow-lg">
+                        <h3 class="font-bold text-lg mb-3"><i class="fas fa-file-invoice-dollar mr-2 text-[#ff8c42]"></i>Tra cứu Hóa đơn</h3>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="searchMaHD" placeholder="Nhập mã hóa đơn (VD: HD01)" class="flex-1">
+                            <button id="btnTraCuuHD" class="btn-primary px-4 py-2 rounded-lg"><i class="fas fa-search mr-1"></i>Tìm</button>
+                        </div>
+                        <div id="hdDetail" class="mt-4 hidden">
+                            <div class="bg-[#2a2a2a] rounded-lg p-4">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h4 class="font-bold text-[#ff8c42] text-lg" id="hdMa">-</h4>
+                                        <p class="text-sm text-gray-400" id="hdThoiGian">-</p>
+                                    </div>
+                                    <span id="hdPhuongThuc" class="status-badge status-served">-</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 mb-3 text-sm">
+                                    <div><span class="text-gray-400">Bàn:</span> <span id="hdBan" class="font-medium">-</span></div>
+                                    <div><span class="text-gray-400">Nhân viên:</span> <span id="hdNV" class="font-medium">-</span></div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="text-gray-400 text-sm mb-2">🍽️ Danh sách món:</div>
+                                    <div class="overflow-auto max-h-52">
+                                        <table class="w-full text-sm">
+                                            <thead class="text-gray-400 border-b border-gray-600">
+                                                <tr><th class="text-left py-2">Món</th><th class="text-center">SL</th><th class="text-right">Đơn giá</th><th class="text-right">Thành tiền</th></tr>
+                                            </thead>
+                                            <tbody id="hdItemsTable"></tbody>
+                                            <tfoot class="border-t border-gray-600">
+                                                <tr><td colspan="3" class="text-right py-2 font-bold">Tổng cộng:</td><td class="text-right font-bold text-[#ff8c42]" id="hdTotal">0₫</td></tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="mt-3 pt-3 border-t border-gray-600">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400">Tiền khách đưa:</span>
+                                        <span id="hdTienKhachDua" class="font-medium">0₫</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm mt-1">
+                                        <span class="text-gray-400">Tiền thừa:</span>
+                                        <span id="hdTienThua" class="font-medium text-green-500">0₫</span>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 mt-3 pt-3 border-t border-gray-600">
+                                    <button id="btnPrintHoaDonTraCuu" class="flex-1 btn-success py-2 rounded-lg text-sm"><i class="fas fa-print mr-1"></i>In hóa đơn</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="hdNotFound" class="text-center py-8 text-gray-400 hidden">
+                            <i class="fas fa-search text-4xl mb-2"></i>
+                            <p>Không tìm thấy hóa đơn. Vui lòng kiểm tra lại mã hóa đơn.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Order -->
+        <div class="w-[30%] bg-card rounded-xl p-4 shadow-lg flex flex-col">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="font-bold text-sm"><i class="fas fa-receipt mr-2 text-[#ff8c42]"></i>Đơn đang gọi</h2>
+                <span id="phieuStatus" class="status-badge status-processing text-xs">⏳ Đang xử lý</span>
+            </div>
+            <!-- Hiển thị mã phiếu hiện tại -->
+            <div id="currentPhieuInfo" class="text-center mb-2 text-xs text-gray-400 hidden">
+                <i class="fas fa-tag mr-1"></i>Mã phiếu: <span id="currentPhieuCode" class="phieu-code font-bold text-[#ff8c42]">-</span>
+            </div>
+            <div id="orderPanel" class="flex-1 max-h-[380px] overflow-y-auto mt-1">
+                <div class="text-gray-500 text-center py-10">Chưa có món</div>
+            </div>
+            <div class="border-t border-gray-700 mt-3 pt-3">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="font-bold">Tổng tiền</span>
+                    <span id="panelTotal" class="text-xl font-bold text-[#ff8c42]">0₫</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="updateStatusBtn" class="flex-1 btn-secondary py-2 rounded-lg text-sm">
+                        <i class="fas fa-check-circle mr-1"></i>Cập nhật TT
+                    </button>
+                    <button id="ghiChuBtn" class="flex-1 btn-secondary py-2 rounded-lg text-sm">
+                        <i class="fas fa-sticky-note mr-1"></i>Ghi chú
+                    </button>
+                    <button id="cancelPhieuBtn" class="flex-1 btn-danger py-2 rounded-lg text-sm">
+                        <i class="fas fa-trash-alt mr-1"></i>Hủy phiếu
+                    </button>
+                </div>
+                <button id="paymentBtn" class="w-full btn-primary py-2 rounded-lg text-sm mt-2">
+                    <i class="fas fa-credit-card mr-1"></i>Thanh toán
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Search Results Panel -->
+    <div id="globalSearchPanel" class="search-results-panel">
+        <div class="flex justify-between items-center mb-2">
+            <span class="font-bold text-sm text-[#ff8c42]"><i class="fas fa-search mr-1"></i>Kết quả tìm kiếm món</span>
+            <button id="closeSearchPanel" class="text-gray-400 hover:text-white text-sm">✕</button>
+        </div>
+        <div id="globalSearchResults" class="max-h-[220px] overflow-y-auto"></div>
+    </div>
+
+    <!-- Chat AI -->
+    <div class="chat-bubble" id="chatBubble"><i class="fas fa-robot text-white text-2xl"></i></div>
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
+            <i class="fas fa-robot mr-2"></i>AI Assistant 
+            <button class="float-right text-white" id="closeChat" style="background:none; border:none; cursor:pointer;">✕</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message-ai"><span>👋 Xin chào! Tôi là trợ lý AI. Tôi có thể giúp gì cho quán hôm nay?</span></div>
+        </div>
+        <div class="chat-input-area">
+            <div class="chat-input-row">
+                <input type="text" id="chatInput" placeholder="Hỏi tôi bất cứ điều gì..." autocomplete="off">
+                <button id="sendChat"><i class="fas fa-paper-plane"></i></button>
+            </div>
+            <div class="quick-replies">
+                <button class="quick-reply-btn" data-msg="ban trong">🪑 Bàn trống</button>
+                <button class="quick-reply-btn" data-msg="mon ban chay">🏆 Món bán chạy</button>
+                <button class="quick-reply-btn" data-msg="khach phan nan mon cham">⚠️ Xử lý phàn nàn</button>
+                <button class="quick-reply-btn" data-msg="goi y combo">🍱 Gợi ý combo</button>
+                <button class="quick-reply-btn" data-msg="bao cao cuoi ngay">📊 Báo cáo cuối ngày</button>
+                <button class="quick-reply-btn" data-msg="doanh thu cua toi">💰 Doanh thu của tôi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thanh toán -->
+    <div id="paymentModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 class="font-bold text-lg mb-3">Thanh toán</h3>
+            <div class="mb-3"><label class="text-sm">Phiếu: <span id="modalPhieu" class="text-[#ff8c42]"></span></label></div>
+            <div class="mb-3"><label class="text-sm">Bàn: <span id="modalBan"></span></label></div>
+            <div class="mb-3"><label class="text-sm">Tổng tiền</label><input id="modalTotal" type="text" class="w-full bg-[#2a2a2a] rounded-lg" readonly></div>
+            <div class="mb-3">
+                <div class="flex gap-2">
+                    <input type="number" id="cashAmount" class="flex-1" placeholder="Tiền khách đưa">
+                    <button id="calculateChangeBtn" class="btn-primary px-4 rounded-lg">OK</button>
+                </div>
+            </div>
+            <div class="mb-3"><label class="text-sm">Tiền thừa</label><input type="text" id="changeAmount" class="w-full bg-[#2a2a2a] rounded-lg" readonly></div>
+            <div class="mb-3">
+                <label class="text-sm">Phương thức</label>
+                <select id="paymentMethod" class="w-full">
+                    <option value="Tiền mặt">💰 Tiền mặt</option>
+                    <option value="Chuyển khoản">🏦 Chuyển khoản</option>
+                    <option value="Thẻ">💳 Thẻ</option>
+                </select>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button id="confirmPaymentBtn" class="btn-primary flex-1 py-2 rounded-lg">Thanh toán</button>
+                <button id="closeModalBtn" class="bg-gray-700 flex-1 py-2 rounded-lg">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xác nhận -->
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-content text-center">
+            <i class="fas fa-exclamation-triangle text-5xl text-yellow-500 mb-3"></i>
+            <h3 class="font-bold text-lg mb-2">Xác nhận thanh toán</h3>
+            <p class="text-gray-400 mb-4">Bạn có chắc chắn muốn thanh toán?</p>
+            <div class="flex gap-2">
+                <button id="confirmPaymentStep2" class="btn-primary flex-1 py-2 rounded-lg">✅ Xác nhận</button>
+                <button id="cancelConfirmBtn" class="btn-secondary flex-1 py-2 rounded-lg">❌ Hủy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Báo cáo cuối ngày -->
+    <div id="dailyReportModal" class="modal hidden">
+        <div class="bg-card rounded-xl w-[1000px] max-h-[85vh] overflow-auto p-5 border border-gray-700">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">📊 Báo cáo cuối ngày</h2>
+                <button id="closeReportBtn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="flex gap-3 mb-4 flex-wrap">
+                <input type="date" id="reportDate" class="w-40 bg-[#2a2a2a] border border-gray-600 rounded p-2">
+                <input type="text" id="nguoiTao" placeholder="Người tạo" class="w-40 bg-[#2a2a2a] border border-gray-600 rounded p-2">
+                <input type="text" id="nguoiNhan" placeholder="Người nhận" class="w-40 bg-[#2a2a2a] border border-gray-600 rounded p-2">
+                <button id="printReportBtn" class="btn-primary px-4 py-2 rounded-lg"><i class="fas fa-print mr-1"></i>In báo cáo</button>
+            </div>
+            <div class="overflow-auto max-h-[500px]" id="reportContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        
+        let currentMaBan = null;
+        let currentPhieu = null;
+        let selectedCategory = null;
+        let currentUser = { MaNV: '', HoTen: '' };
+        let tables = [], categories = [], menuItems = [], allHoaDon = [];
+        let currentTraCuuPhieu = null; // Lưu phiếu đang tra cứu
+        
+        function formatMoney(amount) { return (amount || 0).toLocaleString('vi-VN') + '₫'; }
+        function removeDiacritics(str) { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+            toast.innerHTML = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        // ========== LOAD DATA ==========
+        async function loadUserInfo() { 
+            const name = localStorage.getItem('userName'); 
+            const maNV = localStorage.getItem('userMaNV'); 
+            if (name) { currentUser.HoTen = name; currentUser.MaNV = maNV; document.getElementById('userName').innerText = name; } 
+        }
+        
+        async function loadTables() { 
+            try { const res = await fetch(`${API_URL}/banan`); tables = await res.json(); renderTables(); } 
+            catch(e) { console.error(e); showToast('Lỗi tải danh sách bàn!', 'error'); } 
+        }
+        
+        async function loadCategories() { 
+            try { const res = await fetch(`${API_URL}/danhmuc`); categories = await res.json(); if(categories.length > 0) selectedCategory = categories[0].MaDanhMuc; renderCategories(); renderMenu(); } 
+            catch(e) { console.error(e); } 
+        }
+        
+        async function loadMenu() { 
+            try { const res = await fetch(`${API_URL}/monan`); menuItems = await res.json(); renderMenu(); } 
+            catch(e) { console.error(e); } 
+        }
+        
+        async function loadPhieuByBan(maBan) { 
+            try { 
+                const res = await fetch(`${API_URL}/phieu/${maBan}`); 
+                const data = await res.json(); 
+                if(data.hasPhieu) { 
+                    currentPhieu = { 
+                        MaPhieu: data.maPhieu, 
+                        items: data.items || [], 
+                        status: data.trangThai === 'Đã phục vụ' ? 'served' : (data.trangThai === 'Đã đóng' ? 'closed' : 'processing'), 
+                        ghiChu: data.ghiChu || '' 
+                    }; 
+                    // Hiển thị mã phiếu
+                    document.getElementById('currentPhieuInfo').classList.remove('hidden');
+                    document.getElementById('currentPhieuCode').innerText = currentPhieu.MaPhieu;
+                } else { 
+                    currentPhieu = null; 
+                    document.getElementById('currentPhieuInfo').classList.add('hidden');
+                } 
+                renderOrderPanel();
+            } catch(e) { console.error(e); } 
+        }
+        
+        async function createNewPhieu(maBan) { 
+            try { 
+                const res = await fetch(`${API_URL}/phieu`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ maBan: maBan, maNV: currentUser.MaNV || 'NV02' }) 
+                }); 
+                const data = await res.json(); 
+                if(data.success) { 
+                    currentPhieu = { MaPhieu: data.maPhieu, items: [], status: 'processing', ghiChu: '' }; 
+                    document.getElementById('currentPhieuInfo').classList.remove('hidden');
+                    document.getElementById('currentPhieuCode').innerText = currentPhieu.MaPhieu;
+                    return true; 
+                } 
+            } catch(e) { console.error(e); } return false; 
+        }
+        
+        async function updateBanStatus(maBan, trangThai) {
+            try { await fetch(`${API_URL}/ban/${maBan}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trangThai }) }); } 
+            catch(e) { console.error(e); }
+        }
+        
+        async function addToCartAPI(maPhieu, maMon, soLuong, donGia) { 
+            try { await fetch(`${API_URL}/chitietphieu`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ maPhieu, maMon, soLuong, donGia }) }); } 
+            catch(e) { console.error(e); } 
+        }
+        
+        async function thanhToanAPI(maPhieu, tongTien, phuongThuc, soTienKhachDua, tienThua) { 
+            try { 
+                const res = await fetch(`${API_URL}/thanhtoan`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ maPhieu, maNV: currentUser.MaNV || 'NV02', tongTien, phuongThuc, soTienKhachDua, tienThua }) 
+                }); 
+                return await res.json(); 
+            } catch(e) { return null; } 
+        }
+        
+        async function loadAllHoaDon() {
+            try {
+                const res = await fetch(`${API_URL}/hoadon`);
+                allHoaDon = await res.json();
+                for (let hd of allHoaDon) {
+                    if (hd.MaPhieu) {
+                        const ctRes = await fetch(`${API_URL}/chitietphieu/${hd.MaPhieu}`);
+                        hd.Items = await ctRes.json();
+                    }
+                }
+            } catch(e) { console.error(e); }
+        }
+        
+        // ========== RENDER ==========
+        function renderTables() { 
+            const keyword = document.getElementById('searchTable')?.value?.toLowerCase() || ""; 
+            let filtered = tables.filter(t => t.TenBan.toLowerCase().includes(keyword) || t.MaBan.toLowerCase().includes(keyword)); 
+            document.getElementById('tableList').innerHTML = filtered.map(t => `
+                <button onclick="selectBan('${t.MaBan}')" 
+                    class="table-card p-3 rounded-lg text-center ${currentMaBan === t.MaBan ? 'selected' : ''} ${t.TrangThaiBan === 'Đang phục vụ' ? 'occupied' : ''}">
+                    <div class="font-bold">${t.TenBan}</div>
+                    <div class="text-xs text-gray-400">${t.SoChoNgoi} chỗ</div>
+                    <div class="text-xs mt-1 ${t.TrangThaiBan === 'Đang phục vụ' ? 'text-[#ff8c42]' : 'text-green-500'}">
+                        ${t.TrangThaiBan === 'Đang phục vụ' ? '🟠 Đang dùng' : '⚪ Trống'}
+                    </div>
+                </button>
+            `).join(''); 
+            document.getElementById('totalTables').innerText = tables.length; 
+            document.getElementById('occupiedTables').innerText = tables.filter(t => t.TrangThaiBan === 'Đang phục vụ').length; 
+            document.getElementById('emptyTables').innerText = tables.filter(t => t.TrangThaiBan === 'Trống').length; 
+        }
+        
+        async function selectBan(maBan) { 
+            currentMaBan = maBan; 
+            const ban = tables.find(t => t.MaBan === maBan); 
+            await loadPhieuByBan(maBan); 
+            document.getElementById('selectedBanInfo').innerHTML = `🪑 Bàn: ${ban?.TenBan} | ${currentPhieu ? `📄 ${currentPhieu.MaPhieu}` : 'Chưa có phiếu'}`; 
+            renderTables(); 
+        }
+        
+        async function addToCart(mon) { 
+            if(!currentMaBan) { showToast('Chọn bàn trước!', 'error'); switchTab('phongban'); return; } 
+            if(!currentPhieu) { 
+                if(await createNewPhieu(currentMaBan)) {
+                    await loadPhieuByBan(currentMaBan);
+                    const ban = tables.find(t => t.MaBan === currentMaBan);
+                    if(ban && ban.TrangThaiBan !== 'Đang phục vụ') {
+                        ban.TrangThaiBan = 'Đang phục vụ';
+                        await updateBanStatus(currentMaBan, 'Đang phục vụ');
+                        renderTables();
+                    }
+                } else { 
+                    showToast('Không thể tạo phiếu!', 'error'); 
+                    return; 
+                } 
+            } 
+            if(currentPhieu) { 
+                const existing = currentPhieu.items.find(i => i.MaMon === mon.MaMon); 
+                if(existing) existing.SoLuong++; 
+                else currentPhieu.items.push({ MaMon: mon.MaMon, TenMon: mon.TenMon, SoLuong: 1, DonGia: mon.DonGia }); 
+                await addToCartAPI(currentPhieu.MaPhieu, mon.MaMon, 1, mon.DonGia); 
+                renderOrderPanel(); 
+                showToast(`Đã thêm ${mon.TenMon} vào giỏ`);
+            } 
+        }
+        
+        function renderOrderPanel() { 
+            const panel = document.getElementById('orderPanel'); 
+            const panelTotal = document.getElementById('panelTotal'); 
+            const statusSpan = document.getElementById('phieuStatus'); 
+            if(!currentPhieu || !currentPhieu.items || currentPhieu.items.length === 0) { 
+                panel.innerHTML = '<div class="text-gray-500 text-center py-10"><i class="fas fa-receipt text-3xl mb-2"></i><p>Chưa có món</p></div>'; 
+                panelTotal.innerHTML = '0₫'; 
+                statusSpan.className = 'status-badge status-processing'; 
+                statusSpan.innerHTML = '⏳ Đang xử lý'; 
+                return; 
+            } 
+            if (currentPhieu.status === 'closed') {
+                statusSpan.className = 'status-badge status-closed';
+                statusSpan.innerHTML = '🔒 Đã đóng';
+            } else if (currentPhieu.status === 'served') {
+                statusSpan.className = 'status-badge status-served';
+                statusSpan.innerHTML = '✅ Đã phục vụ';
+            } else {
+                statusSpan.className = 'status-badge status-processing';
+                statusSpan.innerHTML = '⏳ Đang xử lý';
+            }
+            const total = currentPhieu.items.reduce((s,i)=>s+i.SoLuong*i.DonGia,0); 
+            panel.innerHTML = currentPhieu.items.map((item, idx) => `
+                <div class="order-item p-3">
+                    <div class="flex justify-between mb-2">
+                        <div><b>${idx+1}. ${item.TenMon}</b><div class="text-xs text-gray-400">${item.MaMon}</div></div>
+                        <div class="font-bold text-[#ff8c42]">${formatMoney(item.DonGia * item.SoLuong)}</div>
+                    </div>
+                    <div class="flex items-center gap-3 mt-2">
+                        <button onclick="decreaseItem(${idx})" class="w-8 h-8 bg-[#2a2a2a] rounded-full hover:bg-[#3a3a3a]" ${currentPhieu.status === 'closed' ? 'disabled' : ''}>-</button>
+                        <span class="w-8 text-center">${item.SoLuong}</span>
+                        <button onclick="increaseItem(${idx})" class="w-8 h-8 bg-[#2a2a2a] rounded-full hover:bg-[#3a3a3a]" ${currentPhieu.status === 'closed' ? 'disabled' : ''}>+</button>
+                        <span class="text-xs text-gray-500 ml-auto">${formatMoney(item.DonGia)}/món</span>
+                    </div>
+                </div>
+            `).join(''); 
+            panelTotal.innerHTML = formatMoney(total); 
+        }
+        
+        function increaseItem(idx) { 
+            if(currentPhieu && currentPhieu.items[idx] && currentPhieu.status !== 'closed') { 
+                currentPhieu.items[idx].SoLuong++; 
+                addToCartAPI(currentPhieu.MaPhieu, currentPhieu.items[idx].MaMon, 1, currentPhieu.items[idx].DonGia); 
+                renderOrderPanel(); 
+            } 
+        }
+        
+        function decreaseItem(idx) { 
+            if(currentPhieu && currentPhieu.items[idx] && currentPhieu.status !== 'closed') { 
+                if(currentPhieu.items[idx].SoLuong > 1) { 
+                    currentPhieu.items[idx].SoLuong--; 
+                    addToCartAPI(currentPhieu.MaPhieu, currentPhieu.items[idx].MaMon, -1, currentPhieu.items[idx].DonGia); 
+                } else { 
+                    currentPhieu.items.splice(idx,1); 
+                } 
+                renderOrderPanel(); 
+            } 
+        }
+        
+        async function updatePhieuStatus() { 
+            if(!currentPhieu || currentPhieu.items.length===0) { showToast("Chưa có món!", 'error'); return; } 
+            const newStatus = currentPhieu.status === "processing" ? "served" : "processing";
+            const statusText = newStatus === "served" ? "Đã phục vụ" : "Đang xử lý";
+            try {
+                const res = await fetch(`${API_URL}/phieu/${currentPhieu.MaPhieu}/status`, { 
+                    method: 'PUT', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ trangThai: newStatus }) 
+                });
+                const data = await res.json();
+                if(data.success) { currentPhieu.status = newStatus; renderOrderPanel(); showToast(`Đã cập nhật trạng thái: ${statusText}`); }
+                else showToast('Lỗi cập nhật!', 'error');
+            } catch(e) { showToast('Lỗi kết nối!', 'error'); }
+        }
+        
+        async function updateGhiChu() {
+            if(!currentPhieu) { showToast("Chưa chọn phiếu!", 'error'); return; }
+            const newGhiChu = prompt("Nhập ghi chú cho phiếu:", currentPhieu.ghiChu || "");
+            if(newGhiChu !== null) {
+                try {
+                    const res = await fetch(`${API_URL}/phieu/${currentPhieu.MaPhieu}/ghichu`, { 
+                        method: 'PUT', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ ghiChu: newGhiChu }) 
+                    });
+                    const data = await res.json();
+                    if(data.success) { currentPhieu.ghiChu = newGhiChu; showToast("Đã lưu ghi chú!"); }
+                } catch(e) { showToast("Lỗi lưu ghi chú!", 'error'); }
+            }
+        }
+        
+        async function cancelCurrentPhieu() {
+            if(!currentPhieu || currentPhieu.items.length===0) { showToast("Không có phiếu để hủy!", 'error'); return; }
+            if(confirm(`Bạn có chắc muốn hủy phiếu ${currentPhieu.MaPhieu}?`)) {
+                try {
+                    const res = await fetch(`${API_URL}/phieu/${currentPhieu.MaPhieu}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if(data.success) {
+                        currentPhieu = null;
+                        const ban = tables.find(t => t.MaBan === currentMaBan);
+                        if(ban) { ban.TrangThaiBan = 'Trống'; await updateBanStatus(currentMaBan, 'Trống'); }
+                        renderTables(); renderOrderPanel();
+                        document.getElementById('selectedBanInfo').innerHTML = '🏠 Chưa chọn bàn';
+                        document.getElementById('currentPhieuInfo').classList.add('hidden');
+                        showToast('Đã hủy phiếu thành công!');
+                    } else showToast('Lỗi khi hủy phiếu!', 'error');
+                } catch(e) { showToast('Lỗi kết nối!', 'error'); }
+            }
+        }
+        
+        function renderCategories() { 
+            document.getElementById('categoryList').innerHTML = categories.map(cat => `
+                <button onclick="selectCategory('${cat.MaDanhMuc}')" 
+                    class="category-item w-full text-left px-3 py-2 rounded-lg ${selectedCategory === cat.MaDanhMuc ? 'category-active' : 'hover:bg-[#2a2a2a]'}">
+                    ${cat.TenDanhMuc}
+                </button>
+            `).join(''); 
+        }
+        
+        function selectCategory(ma) { selectedCategory = ma; renderCategories(); renderMenu(); }
+        
+        function renderMenu() { 
+            let filtered = menuItems.filter(m => m.MaDanhMuc === selectedCategory && m.TrangThaiMon === 'Còn bán'); 
+            document.getElementById('menuList').innerHTML = filtered.map(m => `
+                <div onclick="addToCart({MaMon:'${m.MaMon}',TenMon:'${m.TenMon}',DonGia:${m.DonGia}})" 
+                    class="menu-item rounded-lg p-3 flex justify-between items-center">
+                    <div>
+                        <div class="font-medium text-sm">${m.TenMon}</div>
+                        <div class="text-xs text-gray-400">${m.MoTa || 'Món ngon'}</div>
+                    </div>
+                    <div class="text-[#ff8c42] font-bold">${formatMoney(m.DonGia)}</div>
+                </div>
+            `).join(''); 
+        }
+        
+        // ========== GLOBAL SEARCH ==========
+        function setupGlobalSearch() {
+            const searchInput = document.getElementById('globalSearchMon');
+            const closePanelBtn = document.getElementById('closeSearchPanel');
+            
+            searchInput.addEventListener('input', function(e) { 
+                const kw = e.target.value.trim(); 
+                if(kw) { 
+                    const keyword = removeDiacritics(kw); 
+                    const results = menuItems.filter(m => removeDiacritics(m.TenMon).includes(keyword) && m.TrangThaiMon === 'Còn bán'); 
+                    const container = document.getElementById('globalSearchResults'); 
+                    if(results.length === 0) container.innerHTML = '<div class="text-gray-500 text-center py-4">Không tìm thấy món</div>'; 
+                    else container.innerHTML = results.map(m => `
+                        <div class="search-result-item" onclick="addToCart({MaMon:'${m.MaMon}',TenMon:'${m.TenMon}',DonGia:${m.DonGia}})">
+                            <span class="search-result-name">${m.TenMon}</span>
+                            <span class="search-result-price">${formatMoney(m.DonGia)}</span>
+                        </div>
+                    `).join(''); 
+                    document.getElementById('globalSearchPanel').classList.add('show'); 
+                } else document.getElementById('globalSearchPanel').classList.remove('show'); 
+            });
+            
+            closePanelBtn.addEventListener('click', function() { 
+                document.getElementById('globalSearchPanel').classList.remove('show'); 
+                searchInput.value = '';
+            });
+            
+            document.addEventListener('click', function(e) { 
+                const panel = document.getElementById('globalSearchPanel'); 
+                const searchBox = document.querySelector('.search-box'); 
+                if(panel.classList.contains('show') && !searchBox.contains(e.target) && !panel.contains(e.target)) 
+                    panel.classList.remove('show'); 
+            });
+        }
+        
+        // ========== TRA CỨU PHIẾU ==========
+        async function traCuuPhieu() {
+            const maPhieu = document.getElementById('searchMaPhieu').value.trim().toUpperCase();
+            if (!maPhieu) {
+                showToast('Vui lòng nhập mã phiếu!', 'error');
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${API_URL}/tracuu/phieu/${maPhieu}`);
+                const data = await res.json();
+                
+                if (!data.success) {
+                    document.getElementById('phieuDetail').classList.add('hidden');
+                    document.getElementById('phieuNotFound').classList.remove('hidden');
+                    return;
+                }
+                
+                document.getElementById('phieuNotFound').classList.add('hidden');
+                document.getElementById('phieuDetail').classList.remove('hidden');
+                
+                currentTraCuuPhieu = data;
+                const phieu = data.phieu;
+                const items = data.items;
+                
+                document.getElementById('phieuMa').innerText = phieu.MaPhieu;
+                document.getElementById('phieuThoiGian').innerText = new Date(phieu.ThoiGianGoiMon).toLocaleString();
+                document.getElementById('phieuBan').innerText = phieu.TenBan;
+                document.getElementById('phieuNV').innerText = phieu.TenNV;
+                document.getElementById('phieuGhiChu').innerText = phieu.GhiChu || 'Không có ghi chú';
+                
+                const trangThai = phieu.TrangThaiPhieu;
+                const statusSpan = document.getElementById('phieuTrangThaiBadge');
+                if (trangThai === 'Đang xử lý') {
+                    statusSpan.className = 'status-badge status-processing';
+                    statusSpan.innerHTML = '⏳ Đang xử lý';
+                } else if (trangThai === 'Đã phục vụ') {
+                    statusSpan.className = 'status-badge status-served';
+                    statusSpan.innerHTML = '✅ Đã phục vụ';
+                } else {
+                    statusSpan.className = 'status-badge status-closed';
+                    statusSpan.innerHTML = '🔒 Đã đóng';
+                }
+                
+                let total = 0;
+                let itemsHtml = '';
+                items.forEach(item => {
+                    const thanhTien = item.SoLuong * item.DonGia;
+                    total += thanhTien;
+                    itemsHtml += `
+                        <tr>
+                            <td class="py-2">${item.TenMon}</td>
+                            <td class="text-center">x${item.SoLuong}</td>
+                            <td class="text-right">${formatMoney(item.DonGia)}</td>
+                            <td class="text-right">${formatMoney(thanhTien)}</td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('phieuItemsTable').innerHTML = itemsHtml;
+                document.getElementById('phieuTotal').innerHTML = formatMoney(total);
+                
+            } catch (error) {
+                console.error('Lỗi tra cứu phiếu:', error);
+                showToast('Lỗi kết nối server!', 'error');
+            }
+        }
+        
+        // Đóng phiếu từ tra cứu
+        async function closePhieuFromTraCuu() {
+            if (!currentTraCuuPhieu || !currentTraCuuPhieu.phieu) {
+                showToast('Không có phiếu để đóng!', 'error');
+                return;
+            }
+            
+            const maPhieu = currentTraCuuPhieu.phieu.MaPhieu;
+            if (currentTraCuuPhieu.phieu.TrangThaiPhieu === 'Đã đóng') {
+                showToast('Phiếu này đã được đóng rồi!', 'error');
+                return;
+            }
+            
+            if (confirm(`Bạn có chắc muốn ĐÓNG phiếu ${maPhieu}? Sau khi đóng sẽ không thể sửa món.`)) {
+                try {
+                    const res = await fetch(`${API_URL}/phieu/${maPhieu}/status`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ trangThai: 'closed' })
+                    });
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        showToast(`✅ Đã đóng phiếu ${maPhieu}!`);
+                        // Refresh lại tra cứu
+                        await traCuuPhieu();
+                        // Nếu đang ở bàn này thì cập nhật lại
+                        if (currentPhieu && currentPhieu.MaPhieu === maPhieu) {
+                            currentPhieu.status = 'closed';
+                            renderOrderPanel();
+                        }
+                    } else {
+                        showToast('Lỗi khi đóng phiếu!', 'error');
+                    }
+                } catch (e) {
+                    showToast('Lỗi kết nối!', 'error');
+                }
+            }
+        }
+        
+        // In phiếu từ tra cứu
+        function printPhieuFromTraCuu() {
+            if (!currentTraCuuPhieu || !currentTraCuuPhieu.phieu) {
+                showToast('Không có phiếu để in!', 'error');
+                return;
+            }
+            
+            const phieu = currentTraCuuPhieu.phieu;
+            const items = currentTraCuuPhieu.items;
+            const total = items.reduce((s, i) => s + i.SoLuong * i.DonGia, 0);
+            
+            let itemsHtml = items.map((item, idx) => `
+                <tr>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd;">${idx + 1}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd;">${item.TenMon}</td>
+                    <td style="padding: 6px; text-align: center; border-bottom: 1px solid #ddd;">${item.SoLuong}</td>
+                    <td style="padding: 6px; text-align: right; border-bottom: 1px solid #ddd;">${formatMoney(item.DonGia)}</td>
+                    <td style="padding: 6px; text-align: right; border-bottom: 1px solid #ddd;">${formatMoney(item.SoLuong * item.DonGia)}</td>
+                </tr>
+            `).join('');
+            
+            const printHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Phiếu gọi món - ${phieu.MaPhieu}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h2 { color: #ff8c42; text-align: center; }
+                        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                        th, td { border: 1px solid #ddd; padding: 8px; }
+                        th { background: #ff8c42; color: white; }
+                        .total { text-align: right; font-size: 16px; font-weight: bold; margin-top: 10px; }
+                        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <h2>🍽️ CƠM THỐ ANH NGUYỄN</h2>
+                    <h3 style="text-align:center">PHIẾU GỌI MÓN</h3>
+                    <p><strong>Mã phiếu:</strong> ${phieu.MaPhieu}</p>
+                    <p><strong>Bàn:</strong> ${phieu.TenBan}</p>
+                    <p><strong>Thời gian:</strong> ${new Date(phieu.ThoiGianGoiMon).toLocaleString()}</p>
+                    <p><strong>Nhân viên:</strong> ${phieu.TenNV}</p>
+                    <p><strong>Trạng thái:</strong> ${phieu.TrangThaiPhieu}</p>
+                    ${phieu.GhiChu ? `<p><strong>Ghi chú:</strong> ${phieu.GhiChu}</p>` : ''}
+                    <table>
+                        <thead><tr><th>#</th><th>Tên món</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+                        <tbody>${itemsHtml}</tbody>
+                    </table>
+                    <div class="total">TỔNG CỘNG: ${formatMoney(total)}</div>
+                    <div class="footer">Cảm ơn quý khách! Chúc quý khách ngon miệng!</div>
+                </body>
+                </html>
+            `;
+            
+            const win = window.open("", "", "width=600,height=700");
+            win.document.write(printHtml);
+            win.document.close();
+            win.print();
+        }
+        
+        // ========== TRA CỨU HÓA ĐƠN ==========
+        let currentTraCuuHoaDon = null;
+        
+        async function traCuuHoaDon() {
+            const maHD = document.getElementById('searchMaHD').value.trim().toUpperCase();
+            if (!maHD) {
+                showToast('Vui lòng nhập mã hóa đơn!', 'error');
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${API_URL}/tracuu/hoadon/${maHD}`);
+                const data = await res.json();
+                
+                if (!data.success) {
+                    document.getElementById('hdDetail').classList.add('hidden');
+                    document.getElementById('hdNotFound').classList.remove('hidden');
+                    return;
+                }
+                
+                document.getElementById('hdNotFound').classList.add('hidden');
+                document.getElementById('hdDetail').classList.remove('hidden');
+                
+                currentTraCuuHoaDon = data;
+                const hoadon = data.hoadon;
+                const items = data.items;
+                
+                document.getElementById('hdMa').innerText = hoadon.MaHD;
+                document.getElementById('hdThoiGian').innerText = new Date(hoadon.ThoiGianThanhToan).toLocaleString();
+                document.getElementById('hdBan').innerText = hoadon.TenBan;
+                document.getElementById('hdNV').innerText = hoadon.TenNV;
+                document.getElementById('hdPhuongThuc').innerHTML = hoadon.PhuongThucThanhToan === 'Tiền mặt' ? '💰 Tiền mặt' : (hoadon.PhuongThucThanhToan === 'Chuyển khoản' ? '🏦 Chuyển khoản' : '💳 Thẻ');
+                
+                let total = 0;
+                let itemsHtml = '';
+                items.forEach(item => {
+                    const thanhTien = item.SoLuong * item.DonGia;
+                    total += thanhTien;
+                    itemsHtml += `
+                        <tr>
+                            <td class="py-2">${item.TenMon}</td>
+                            <td class="text-center">x${item.SoLuong}</td>
+                            <td class="text-right">${formatMoney(item.DonGia)}</td>
+                            <td class="text-right">${formatMoney(thanhTien)}</td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('hdItemsTable').innerHTML = itemsHtml;
+                document.getElementById('hdTotal').innerHTML = formatMoney(total);
+                document.getElementById('hdTienKhachDua').innerHTML = formatMoney(hoadon.SoTienKhachDua);
+                document.getElementById('hdTienThua').innerHTML = formatMoney(hoadon.TienThua);
+                
+            } catch (error) {
+                console.error('Lỗi tra cứu hóa đơn:', error);
+                showToast('Lỗi kết nối server!', 'error');
+            }
+        }
+        
+        function printHoaDonFromTraCuu() {
+            if (!currentTraCuuHoaDon || !currentTraCuuHoaDon.hoadon) {
+                showToast('Không có hóa đơn để in!', 'error');
+                return;
+            }
+            
+            const hoadon = currentTraCuuHoaDon.hoadon;
+            const items = currentTraCuuHoaDon.items;
+            const total = items.reduce((s, i) => s + i.SoLuong * i.DonGia, 0);
+            
+            let itemsHtml = items.map(item => `
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">${item.TenMon}</td>
+                    <td style="padding: 8px; text-align: center;">x${item.SoLuong}</td>
+                    <td style="padding: 8px; text-align: right;">${formatMoney(item.DonGia)}</td>
+                    <td style="padding: 8px; text-align: right;">${formatMoney(item.SoLuong * item.DonGia)}</td>
+                </tr>
+            `).join('');
+            
+            const printHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Hóa đơn - ${hoadon.MaHD}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h2 { color: #ff8c42; text-align: center; }
+                        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                        th, td { border: 1px solid #ddd; padding: 8px; }
+                        th { background: #ff8c42; color: white; }
+                        .total { text-align: right; font-size: 16px; font-weight: bold; margin-top: 10px; }
+                        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+                        .thankyou { text-align: center; margin-top: 15px; font-size: 14px; color: #ff8c42; }
+                    </style>
+                </head>
+                <body>
+                    <h2>🍽️ CƠM THỐ ANH NGUYỄN</h2>
+                    <h3 style="text-align:center">HÓA ĐƠN THANH TOÁN</h3>
+                    <p><strong>Mã HD:</strong> ${hoadon.MaHD}</p>
+                    <p><strong>Bàn:</strong> ${hoadon.TenBan}</p>
+                    <p><strong>Thời gian:</strong> ${new Date(hoadon.ThoiGianThanhToan).toLocaleString()}</p>
+                    <p><strong>Nhân viên:</strong> ${hoadon.TenNV}</p>
+                    <p><strong>Phương thức:</strong> ${hoadon.PhuongThucThanhToan}</p>
+                    ${hoadon.PhuongThucThanhToan === 'Tiền mặt' ? `<p><strong>Tiền khách đưa:</strong> ${formatMoney(hoadon.SoTienKhachDua)}</p><p><strong>Tiền thừa:</strong> ${formatMoney(hoadon.TienThua)}</p>` : ''}
+                    <table>
+                        <thead><tr><th>Món ăn</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+                        <tbody>${itemsHtml}</tbody>
+                    </table>
+                    <div class="total">TỔNG CỘNG: ${formatMoney(total)}</div>
+                    <div class="thankyou">CẢM ƠN QUÝ KHÁCH! HẸN GẶP LẠI!</div>
+                    <div class="footer">Cơm thố Anh Nguyễn - Hotline: 1900 1234</div>
+                </body>
+                </html>
+            `;
+            
+            const win = window.open("", "", "width=600,height=800");
+            win.document.write(printHtml);
+            win.document.close();
+            win.print();
+        }
+        
+        // ========== THANH TOÁN ==========
+        let paymentTotal = 0;
+        
+        function showPaymentModal() { 
+            if(!currentPhieu || currentPhieu.items.length===0) { showToast('Chưa có món!', 'error'); return; } 
+            if(currentPhieu.status === 'processing') { showToast('Đơn đang xử lý! Cần cập nhật "Đã phục vụ" trước khi thanh toán.', 'error'); return; } 
+            paymentTotal = currentPhieu.items.reduce((s,i)=>s+i.SoLuong*i.DonGia,0); 
+            document.getElementById('modalPhieu').innerText = currentPhieu.MaPhieu; 
+            document.getElementById('modalBan').innerText = tables.find(t=>t.MaBan===currentMaBan)?.TenBan; 
+            document.getElementById('modalTotal').value = formatMoney(paymentTotal); 
+            document.getElementById('cashAmount').value = ''; 
+            document.getElementById('changeAmount').value = ''; 
+            document.getElementById('paymentModal').classList.remove('hidden'); 
+        }
+        
+        document.getElementById('calculateChangeBtn')?.addEventListener('click', function() { 
+            const money = parseInt(document.getElementById('cashAmount').value) || 0; 
+            document.getElementById('changeAmount').value = money >= paymentTotal ? formatMoney(money - paymentTotal) : '❌ Không đủ'; 
+        });
+        
+        async function completePayment() { 
+            const money = parseInt(document.getElementById('cashAmount').value) || 0; 
+            const method = document.getElementById('paymentMethod').value; 
+            if(method === 'Tiền mặt' && money < paymentTotal) { showToast('Tiền không đủ!', 'error'); return; } 
+            const result = await thanhToanAPI(currentPhieu.MaPhieu, paymentTotal, method, money, Math.max(0, money-paymentTotal)); 
+            if(result && result.success) { 
+                const ban = tables.find(t => t.MaBan === currentMaBan);
+                showToast(`✅ Thanh toán thành công! Mã HD: ${result.maHD}`);
+                
+                // Lưu thông tin hóa đơn
+                const invoiceData = { 
+                    maHD: result.maHD, 
+                    maPhieu: currentPhieu.MaPhieu,
+                    tenBan: ban?.TenBan, 
+                    thoiGian: new Date().toLocaleString(), 
+                    items: [...currentPhieu.items], 
+                    total: paymentTotal, 
+                    method: method, 
+                    money: money, 
+                    change: Math.max(0, money-paymentTotal) 
+                };
+                localStorage.setItem('lastInvoice', JSON.stringify(invoiceData));
+                
+                // In hóa đơn tự động
+                setTimeout(() => {
+                    let itemsHtml = invoiceData.items.map(i => `
+                        <tr><td style="padding:8px">${i.TenMon}</td><td style="text-align:center">x${i.SoLuong}</td><td style="text-align:right">${formatMoney(i.DonGia)}</td><td style="text-align:right">${formatMoney(i.DonGia*i.SoLuong)}</td></tr>
+                    `).join('');
+                    let printHtml = `<html><head><title>Hóa đơn</title>
+                    <style>body{font-family:Arial;padding:20px}h2{color:#ff8c42;text-align:center}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px}th{background:#f5f5f5}.text-right{text-align:right}</style>
+                    </head><body>
+                    <h2>CƠM THỐ ANH NGUYỄN</h2>
+                    <p><strong>Mã HD:</strong> ${result.maHD}</p>
+                    <p><strong>Bàn:</strong> ${ban?.TenBan}</p>
+                    <p><strong>Thời gian:</strong> ${new Date().toLocaleString()}</p>
+                    <p><strong>Nhân viên:</strong> ${currentUser.HoTen}</p><hr>
+                    </table><thead><tr><th>Món</th><th>SL</th><th>ĐG</th><th>TT</th></tr></thead>
+                    <tbody>${itemsHtml}</tbody>
+                    <tfoot><tr><td colspan="3" class="text-right"><strong>Tổng cộng</strong></td><td class="text-right"><strong>${formatMoney(paymentTotal)}</strong></td></tr>
+                    ${method === 'Tiền mặt' ? `<tr><td colspan="3" class="text-right">Tiền khách đưa</td><td class="text-right">${formatMoney(money)}</td></tr>
+                    <tr><td colspan="3" class="text-right">Tiền thừa</td><td class="text-right">${formatMoney(money-paymentTotal)}</td></tr>` : ''}</tfoot>
+                    </table>
+                    <p><strong>Phương thức:</strong> ${method}</p><hr>
+                    <div style="text-align:center">Cảm ơn quý khách! Hẹn gặp lại!</div>
+                    </body></html>`;
+                    let w = window.open("", "", "width=500,height=600");
+                    w.document.write(printHtml); w.document.close(); w.print();
+                }, 500);
+                
+                currentPhieu = null;
+                if(ban) { ban.TrangThaiBan = 'Trống'; await updateBanStatus(currentMaBan, 'Trống'); }
+                renderTables(); renderOrderPanel(); 
+                document.getElementById('selectedBanInfo').innerHTML = '🏠 Chưa chọn bàn'; 
+                document.getElementById('currentPhieuInfo').classList.add('hidden');
+                document.getElementById('paymentModal').classList.add('hidden'); 
+                document.getElementById('confirmModal').classList.add('hidden'); 
+                await loadAllHoaDon();
+            } else { showToast('Lỗi thanh toán!', 'error'); } 
+        }
+        
+        // ========== BÁO CÁO CUỐI NGÀY ==========
+        async function showDailyReport() { 
+            await loadAllHoaDon(); 
+            renderReportTable(); 
+            document.getElementById('dailyReportModal').classList.remove('hidden'); 
+        }
+        
+        function renderReportTable() { 
+            const reportDate = document.getElementById('reportDate').value || new Date().toISOString().slice(0,10);
+            const filtered = allHoaDon.filter(inv => inv.ThoiGianThanhToan?.slice(0,10) === reportDate);
+            
+            let tongSL = 0, tongDT = 0;
+            
+            if(filtered.length === 0) {
+                document.getElementById('reportContent').innerHTML = '<div class="text-center py-10 text-gray-400">📭 Không có dữ liệu hóa đơn trong ngày này</div>';
+                return;
+            }
+            
+            filtered.forEach(inv => {
+                if(inv.Items) inv.Items.forEach(item => tongSL += item.SoLuong);
+                tongDT += inv.TongTien || 0;
+            });
+            
+            let tableHtml = `<table class="w-full border-collapse text-sm">
+                <thead><tr class="bg-[#2a2a2a]">
+                    <th class="border border-gray-600 p-2">Mã HD</th><th class="border border-gray-600 p-2">Thời gian</th>
+                    <th class="border border-gray-600 p-2">Bàn</th><th class="border border-gray-600 p-2">SLSP</th>
+                    <th class="border border-gray-600 p-2">Doanh thu</th><th class="border border-gray-600 p-2">PT thanh toán</th>
+                  </tr></thead><tbody>`;
+            
+            filtered.forEach(inv => {
+                let slsp = 0;
+                if(inv.Items) slsp = inv.Items.reduce((s,i)=>s+i.SoLuong,0);
+                tableHtml += `<tr class="hover:bg-[#2a2a2a]">
+                    <td class="border border-gray-600 p-2">${inv.MaHD}</td>
+                    <td class="border border-gray-600 p-2">${new Date(inv.ThoiGianThanhToan).toLocaleString()}</td>
+                    <td class="border border-gray-600 p-2">${inv.TenBan || ''}</td>
+                    <td class="border border-gray-600 p-2 text-center">${slsp}</td>
+                    <td class="border border-gray-600 p-2 text-right font-bold text-[#ff8c42]">${formatMoney(inv.TongTien)}</td>
+                    <td class="border border-gray-600 p-2">${inv.PhuongThucThanhToan || 'Tiền mặt'}</td>
+                  </tr>`;
+            });
+            
+            tableHtml += `<tfoot><tr class="bg-[#2a2a2a] font-bold">
+                <td colspan="3" class="border border-gray-600 p-2 text-right">Tổng cộng:</td>
+                <td class="border border-gray-600 p-2 text-center">${tongSL}</td>
+                <td class="border border-gray-600 p-2 text-right">${formatMoney(tongDT)}</td>
+                <td class="border border-gray-600 p-2"></td>
+              </tr></tfoot></table>`;
+            
+            document.getElementById('reportContent').innerHTML = tableHtml;
+        }
+        
+        function printReport() { 
+            const printContents = document.getElementById('reportContent').innerHTML; 
+            const reportDate = document.getElementById('reportDate').value || new Date().toISOString().slice(0,10);
+            const nguoiTao = document.getElementById('nguoiTao').value || currentUser.HoTen;
+            const nguoiNhan = document.getElementById('nguoiNhan').value || 'Quản lý';
+            const win = window.open('', '', 'width=1000,height=700'); 
+            win.document.write(`<html><head><title>Báo cáo cuối ngày</title>
+                <style>body{font-family:Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}th{background:#f0f0f0}.text-right{text-align:right}.text-center{text-align:center}h2{text-align:center;color:#ff8c42}</style>
+                </head><body>
+                <h2>BÁO CÁO CUỐI NGÀY</h2>
+                <p><strong>Ngày:</strong> ${reportDate}</p>
+                <p><strong>Người tạo:</strong> ${nguoiTao}</p>
+                <p><strong>Người nhận:</strong> ${nguoiNhan}</p><hr>${printContents}<hr>
+                <p style="text-align:center">CƠM THỐ ANH NGUYỄN - Cảm ơn quý khách!</p>
+                </body></html>`); 
+            win.document.close(); win.print(); 
+        }
+        
+        // ========== AI CHAT ==========
+        function getLocalReply(message) {
+            const msg = message.toLowerCase();
+            // Chuẩn hóa message để nhận diện nhiều biến thể
+            const normalized = removeDiacritics(msg);
+            
+            // 1. Hỏi bàn trống (bàn nào đang trống, bàn còn trống, phục vụ khách)
+            if (normalized.includes('ban trong') || normalized.includes('ban nao trong') || 
+                normalized.includes('con ban nao') || normalized.includes('ban trong de phuc vu') ||
+                msg.includes('bàn trống') || msg.includes('bàn nào trống') || 
+                msg.includes('còn bàn nào') || msg.includes('bàn trống để phục vụ')) {
+                const emptyBans = tables.filter(t => t.TrangThaiBan === 'Trống');
+                if (emptyBans.length === 0) return `🪑 Hiện tại KHÔNG có bàn trống nào. Tất cả ${tables.length} bàn đều đang phục vụ khách.`;
+                const banList = emptyBans.map(b => `${b.TenBan} (${b.SoChoNgoi} chỗ)`).join(', ');
+                return `🪑 Các bàn trống hiện tại: ${banList}. Tổng cộng ${emptyBans.length} bàn trống. Hãy nhanh chóng đón khách!`;
+            }
+            
+            // 2. Gợi ý món bán chạy (best-seller, món bán chạy, top món, gợi ý món)
+            if (normalized.includes('mon ban chay') || normalized.includes('best-seller') || 
+                normalized.includes('top mon') || normalized.includes('goi y mon') ||
+                normalized.includes('tu van mon') || normalized.includes('mon duoc goi nhieu') ||
+                msg.includes('món bán chạy') || msg.includes('gợi ý món') || msg.includes('tư vấn món')) {
+                const monStats = {};
+                allHoaDon.forEach(inv => {
+                    if(inv.Items) inv.Items.forEach(item => {
+                        const mon = menuItems.find(m => m.MaMon === item.MaMon);
+                        if(mon) monStats[mon.TenMon] = (monStats[mon.TenMon] || 0) + item.SoLuong;
+                    });
+                });
+                const top = Object.entries(monStats).sort((a,b)=>b[1]-a[1]);
+                if (top.length === 0) return `🏆 Chưa có dữ liệu món bán chạy hôm nay. Hãy bắt đầu ghi nhận đơn hàng!`;
+                const top3 = top.slice(0,3).map(([name, qty], idx) => `${idx+1}. ${name} (${qty} phần)`);
+                return `🏆 TOP MÓN BÁN CHẠY HÔM NAY:\n${top3.join('\n')}\n\n💡 Gợi ý: Hãy giới thiệu món "${top[0][0]}" cho khách hàng mới!`;
+            }
+            
+            // 3. Xử lý khách phàn nàn món chậm (món lên chậm, khách phàn nàn, xử lý thế nào)
+            if (normalized.includes('khach phan nan') || normalized.includes('mon cham') || 
+                normalized.includes('mon len cham') || normalized.includes('xu ly phan nan') ||
+                normalized.includes('khach khong hai long') || normalized.includes('can xu ly') ||
+                msg.includes('phàn nàn') || msg.includes('món chậm') || msg.includes('lên chậm')) {
+                // Tìm bàn đang phàn nàn (có thể trích xuất số bàn từ message)
+                let banNumber = '';
+                const banMatch = msg.match(/\d+/);
+                if (banMatch) banNumber = banMatch[0];
+                
+                return `⚠️ XỬ LÝ KHÁCH PHÀN NÀN MÓN CHẬM:\n\n` +
+                       `1. 🏃‍♂️ Đến ngay bàn ${banNumber ? `bàn ${banNumber}` : 'đang phàn nàn'} để xin lỗi khách\n` +
+                       `2. 🔥 Kiểm tra bếp - báo ngay trưởng ca để đẩy nhanh món\n` +
+                       `3. 🎁 Mời khách nước uống hoặc món khai vị miễn phí để xoa dịu\n` +
+                       `4. ⏱️ Cập nhật thời gian hoàn thành cho khách\n` +
+                       `5. 📝 Sau bữa ăn, rút kinh nghiệm với bếp để cải thiện quy trình\n\n` +
+                       `💡 Món ${banNumber ? `bàn ${banNumber}` : 'này'} có thể thay bằng món nhanh hơn nếu khách đồng ý.`;
+            }
+            
+            // 4. Gợi ý combo món (gọi cùng nhau, combo, ăn kèm)
+            if (normalized.includes('goi y combo') || normalized.includes('combo mon') || 
+                normalized.includes('goi cung nhau') || normalized.includes('an kem') ||
+                normalized.includes('thuong di kem') || normalized.includes('bo sung') ||
+                msg.includes('gợi ý combo') || msg.includes('combo') || msg.includes('gọi cùng')) {
+                return `🍱 GỢI Ý COMBO MÓN CHO KHÁCH:\n\n` +
+                       `📌 Combo CƠM THỐ ĐẶC BIỆT (tiết kiệm 15k):\n` +
+                       `   • Cơm thố đặc biệt (70k) + Trà chanh (20k) = 90k ➜ chỉ 75k\n\n` +
+                       `📌 Combo NHÓM BẠN (4 người, tiết kiệm 30k):\n` +
+                       `   • 4 Cơm thố các loại (220k) + 2 Đồ uống (40k) + 1 Món gọi thêm (30k)\n` +
+                       `   ➜ Tổng 290k chỉ còn 260k\n\n` +
+                       `📌 Combo VĂN PHÒNG (tiết kiệm 10k):\n` +
+                       `   • Cơm thố + Trà đá + Canh = Giảm 10k\n\n` +
+                       `📌 Món thường gọi kèm:\n` +
+                       `   • Cơm thố xá xíu 🍗 + Kim chi 🥬\n` +
+                       `   • Cơm thố bò 🥩 + Trà chanh 🍹\n` +
+                       `   • Cơm thố gà 🍗 + Bia 🍺`;
+            }
+            
+            // 5. Tổng hợp báo cáo cuối ngày
+            if (normalized.includes('bao cao cuoi ngay') || normalized.includes('tong hop bao cao') ||
+                normalized.includes('lam bao cao') || normalized.includes('cach tong hop') ||
+                normalized.includes('tổng hợp báo cáo') || msg.includes('báo cáo cuối ngày')) {
+                const today = new Date().toISOString().slice(0,10);
+                const todayHoaDon = allHoaDon.filter(i => i.ThoiGianThanhToan?.slice(0,10) === today);
+                const totalRevenue = todayHoaDon.reduce((s,i)=>s+(i.TongTien||0),0);
+                const totalOrders = todayHoaDon.length;
+                let totalItems = 0;
+                todayHoaDon.forEach(inv => {
+                    if(inv.Items) totalItems += inv.Items.reduce((s,i)=>s+i.SoLuong,0);
+                });
+                return `📊 CÁCH TỔNG HỢP BÁO CÁO CUỐI NGÀY:\n\n` +
+                       `🔹 Bước 1: Vào menu góc phải trên màn hình, chọn "📊 Báo cáo cuối ngày"\n` +
+                       `🔹 Bước 2: Chọn ngày cần báo cáo (mặc định là hôm nay)\n` +
+                       `🔹 Bước 3: Nhập tên người tạo báo cáo (tên bạn)\n` +
+                       `🔹 Bước 4: Nhập tên người nhận (Quản lý/Chủ quán)\n` +
+                       `🔹 Bước 5: Nhấn "In báo cáo" để xuất ra file PDF hoặc giấy\n\n` +
+                       `📈 DỮ LIỆU HÔM NAY (${today}):\n` +
+                       `   • Doanh thu: ${formatMoney(totalRevenue)}\n` +
+                       `   • Số hóa đơn: ${totalOrders}\n` +
+                       `   • Tổng sản phẩm bán ra: ${totalItems}`;
+            }
+            
+            // Doanh thu của tôi / ca trực
+            if ((normalized.includes('doanh thu') || normalized.includes('tien mat')) && 
+                (normalized.includes('cua toi') || normalized.includes('ca truc') || 
+                 normalized.includes('toi ban') || msg.includes('của tôi'))) {
+                const userMaNV = currentUser.MaNV || 'NV02';
+                const userInvoices = allHoaDon.filter(i => i.MaNV === userMaNV);
+                const totalRevenue = userInvoices.reduce((s,i)=>s+(i.TongTien||0),0);
+                const cashRevenue = userInvoices.filter(i => i.PhuongThucThanhToan === 'Tiền mặt').reduce((s,i)=>s+(i.TongTien||0),0);
+                return `💰 DOANH THU CỦA BẠN (${currentUser.HoTen}):\n\n` +
+                       `   • Tổng doanh thu: ${formatMoney(totalRevenue)}\n` +
+                       `   • Tiền mặt: ${formatMoney(cashRevenue)}\n` +
+                       `   • Chuyển khoản/Thẻ: ${formatMoney(totalRevenue - cashRevenue)}\n` +
+                       `   • Số hóa đơn: ${userInvoices.length}\n\n` +
+                       `🏆 Hôm nay làm việc tốt nhé! Cố gắng tư vấn thêm combo để tăng doanh thu!`;
+            }
+            
+            // Tổng doanh thu hôm nay (toàn quán)
+            if (normalized.includes('tong doanh thu') || normalized.includes('doanh thu hom nay') ||
+                msg.includes('tổng doanh thu hôm nay') || msg.includes('hôm nay bán được')) {
+                const todayRevenue = allHoaDon.filter(i => i.ThoiGianThanhToan?.slice(0,10) === new Date().toISOString().slice(0,10)).reduce((s,i)=>s+(i.TongTien||0),0);
+                const todayOrders = allHoaDon.filter(i => i.ThoiGianThanhToan?.slice(0,10) === new Date().toISOString().slice(0,10)).length;
+                return `📊 DOANH THU HÔM NAY: ${formatMoney(todayRevenue)}\n` +
+                       `📋 Số hóa đơn: ${todayOrders}\n` +
+                       `💪 Trung bình mỗi hóa đơn: ${formatMoney(todayRevenue / (todayOrders || 1))}\n\n` +
+                       `🎉 Chúc mừng quán mình! Tiếp tục phục vụ khách thật tốt nhé!`;
+            }
+            
+            // Hỗ trợ khác
+            return `🤖 Tôi có thể giúp bạn những việc sau:\n\n` +
+                   `🔹 "Bàn trống" - Xem danh sách bàn còn trống\n` +
+                   `🔹 "Món bán chạy" - Gợi ý món best-seller\n` +
+                   `🔹 "Xử lý phàn nàn" - Cách xử lý khi khách kêu món chậm\n` +
+                   `🔹 "Gợi ý combo" - Combo món tiết kiệm cho khách\n` +
+                   `🔹 "Báo cáo cuối ngày" - Hướng dẫn tổng hợp báo cáo\n` +
+                   `🔹 "Doanh thu của tôi" - Xem doanh thu ca trực\n\n` +
+                   `💡 Bạn cần hỗ trợ gì thêm ạ?`;
+        }
+        
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML += `<div class="message-user"><span>${escapeHtml(message)}</span></div>`;
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            const loadingId = 'loading-' + Date.now();
+            chatMessages.innerHTML += `<div id="${loadingId}" class="message-ai"><span><div class="typing-indicator"><span></span><span></span><span></span></div></span></div>`;
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            setTimeout(async () => {
+                let reply = getLocalReply(message);
+                document.getElementById(loadingId)?.remove();
+                chatMessages.innerHTML += `<div class="message-ai"><span>🤖 ${escapeHtml(reply)}</span></div>`;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 500);
+        }
+        
+        function toggleChat() { 
+            const w = document.getElementById('chatWindow'); 
+            w.style.display = w.style.display === 'flex' ? 'none' : 'flex'; 
+        }
+        
+        // ========== SWITCH TAB ==========
+        function switchTab(tab) { 
+            const pBan = document.getElementById('phongBanPanel');
+            const tDon = document.getElementById('thucDonPanel');
+            const tCuu = document.getElementById('traCuuPanel');
+            const btnBan = document.getElementById('tabPhongBanBtn');
+            const btnDon = document.getElementById('tabThucDonBtn');
+            const btnCuu = document.getElementById('tabTraCuuBtn');
+            
+            pBan.classList.add('hidden');
+            tDon.classList.add('hidden');
+            if (tCuu) tCuu.classList.add('hidden');
+            
+            btnBan.classList.remove('tab-active');
+            btnBan.classList.add('text-gray-400');
+            btnDon.classList.remove('tab-active');
+            btnDon.classList.add('text-gray-400');
+            if (btnCuu) {
+                btnCuu.classList.remove('tab-active');
+                btnCuu.classList.add('text-gray-400');
+            }
+            
+            if (tab === 'phongban') { 
+                pBan.classList.remove('hidden'); 
+                btnBan.classList.add('tab-active'); 
+                btnBan.classList.remove('text-gray-400');
+            } else if (tab === 'thucdon') { 
+                tDon.classList.remove('hidden'); 
+                btnDon.classList.add('tab-active'); 
+                btnDon.classList.remove('text-gray-400');
+                renderMenu(); 
+            } else if (tab === 'tracuu' && tCuu) { 
+                tCuu.classList.remove('hidden'); 
+                btnCuu.classList.add('tab-active'); 
+                btnCuu.classList.remove('text-gray-400');
+            } 
+        }
+        
+        // ========== UTILITIES ==========
+        function showInfo() { alert(`👤 Nhân viên: ${currentUser.HoTen}\nMã NV: ${currentUser.MaNV}`); }
+        function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+        
+        // ========== EVENT LISTENERS ==========
+        document.getElementById('tabPhongBanBtn')?.addEventListener('click', () => switchTab('phongban'));
+        document.getElementById('tabThucDonBtn')?.addEventListener('click', () => switchTab('thucdon'));
+        document.getElementById('tabTraCuuBtn')?.addEventListener('click', () => switchTab('tracuu'));
+        document.getElementById("searchTable")?.addEventListener("input", renderTables);
+        document.getElementById('closeReportBtn')?.addEventListener('click', () => document.getElementById('dailyReportModal').classList.add('hidden'));
+        document.getElementById('printReportBtn')?.addEventListener('click', printReport);
+        document.getElementById('updateStatusBtn')?.addEventListener('click', updatePhieuStatus);
+        document.getElementById('ghiChuBtn')?.addEventListener('click', updateGhiChu);
+        document.getElementById('cancelPhieuBtn')?.addEventListener('click', cancelCurrentPhieu);
+        document.getElementById('paymentBtn')?.addEventListener('click', showPaymentModal);
+        document.getElementById('confirmPaymentBtn')?.addEventListener('click', () => {
+            document.getElementById('paymentModal').classList.add('hidden');
+            document.getElementById('confirmModal').classList.remove('hidden');
+        });
+        document.getElementById('confirmPaymentStep2')?.addEventListener('click', completePayment);
+        document.getElementById('cancelConfirmBtn')?.addEventListener('click', () => {
+            document.getElementById('confirmModal').classList.add('hidden');
+            showPaymentModal();
+        });
+        document.getElementById('closeModalBtn')?.addEventListener('click', () => document.getElementById('paymentModal').classList.add('hidden'));
+        document.getElementById('chatBubble')?.addEventListener('click', toggleChat);
+        document.getElementById('closeChat')?.addEventListener('click', toggleChat);
+        document.getElementById('sendChat')?.addEventListener('click', sendChatMessage);
+        document.getElementById('chatInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
+        
+        // Quick replies
+        document.querySelectorAll('.quick-reply-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const msg = btn.getAttribute('data-msg');
+                if (msg) { document.getElementById('chatInput').value = msg; sendChatMessage(); }
+            });
+        });
+        
+        // Tra cứu events
+        document.getElementById('btnTraCuuPhieu')?.addEventListener('click', traCuuPhieu);
+        document.getElementById('btnTraCuuHD')?.addEventListener('click', traCuuHoaDon);
+        document.getElementById('btnClosePhieuTraCuu')?.addEventListener('click', closePhieuFromTraCuu);
+        document.getElementById('btnPrintPhieuTraCuu')?.addEventListener('click', printPhieuFromTraCuu);
+        document.getElementById('btnPrintHoaDonTraCuu')?.addEventListener('click', printHoaDonFromTraCuu);
+        document.getElementById('searchMaPhieu')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') traCuuPhieu(); });
+        document.getElementById('searchMaHD')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') traCuuHoaDon(); });
+        
+        document.getElementById('reportDate').value = new Date().toISOString().slice(0,10);
+        
+        async function init() {
+            await loadUserInfo();
+            await loadTables();
+            await loadCategories();
+            await loadMenu();
+            await loadAllHoaDon();
+            setupGlobalSearch();
+            switchTab('phongban');
+        }
+        init();
+    </script>
+</body>
+</html>

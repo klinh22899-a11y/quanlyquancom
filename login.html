@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Cơm thố Anh Nguyễn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); position: relative; overflow-x: hidden; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.55); z-index: 1; }
+        .slideshow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.5s ease-in-out; }
+        .slide.active { opacity: 1; }
+        .glass-card { background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px); border-radius: 32px; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3); }
+        .input-group { position: relative; margin-bottom: 28px; }
+        .input-group i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); font-size: 18px; transition: all 0.3s; }
+        .input-group input { width: 100%; padding: 14px 16px 14px 48px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 50px; color: white; font-size: 15px; transition: all 0.3s; }
+        .input-group input:focus { outline: none; border-color: #ff8c42; background: rgba(255, 255, 255, 0.15); box-shadow: 0 0 15px rgba(255, 140, 66, 0.3); }
+        .input-group input::placeholder { color: rgba(255, 255, 255, 0.5); }
+        .input-group input:focus + i { color: #ff8c42; }
+        .login-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%); border: none; border-radius: 50px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s; margin-top: 10px; }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(255, 140, 66, 0.4); }
+        .role-selector { display: flex; gap: 12px; margin-bottom: 25px; background: rgba(255, 255, 255, 0.08); border-radius: 50px; padding: 4px; }
+        .role-option { flex: 1; text-align: center; padding: 10px; border-radius: 50px; cursor: pointer; transition: all 0.3s; font-weight: 500; color: rgba(255, 255, 255, 0.7); }
+        .role-option.active { background: #ff8c42; color: white; box-shadow: 0 4px 12px rgba(255, 140, 66, 0.3); }
+        .role-option i { margin-right: 6px; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+        .shake { animation: shake 0.3s ease-in-out; }
+        .footer { position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 12px; z-index: 2; }
+        .logo { text-align: center; margin-bottom: 30px; }
+        .logo i { font-size: 60px; color: #ff8c42; margin-bottom: 10px; }
+        .logo h1 { font-size: 28px; font-weight: bold; color: white; letter-spacing: 1px; }
+        .logo p { color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="slideshow" id="slideshow">
+        <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600&h=900&fit=crop');"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1600&h=900&fit=crop');"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=1600&h=900&fit=crop');"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=1600&h=900&fit=crop');"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1574480410204-4b22c7b7b9b9?w=1600&h=900&fit=crop');"></div>
+    </div>
+    <div class="overlay"></div>
+    <div class="relative z-10 min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md">
+            <div class="glass-card p-8">
+                <div class="logo"><i class="fas fa-utensils"></i><h1>Cơm thố Anh Nguyễn</h1><p>Hệ thống quản lý</p></div>
+                <div class="role-selector">
+                    <div class="role-option active" data-role="nhanvien"><i class="fas fa-user-friends"></i> Nhân viên</div>
+                    <div class="role-option" data-role="quantri"><i class="fas fa-chart-line"></i> Quản lý</div>
+                </div>
+                <form id="loginForm">
+                    <div class="input-group"><i class="fas fa-user"></i><input type="text" id="username" placeholder="Tên đăng nhập" autocomplete="off"></div>
+                    <div class="input-group"><i class="fas fa-lock"></i><input type="password" id="password" placeholder="Mật khẩu"></div>
+                    <button type="submit" class="login-btn"><i class="fas fa-sign-in-alt mr-2"></i> Đăng nhập</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="footer"><i class="fas fa-copyright mr-1"></i> 2026 Cơm thố Anh Nguyễn - Hệ thống quản lý</div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        function nextSlide() { slides[currentSlide].classList.remove('active'); currentSlide = (currentSlide + 1) % totalSlides; slides[currentSlide].classList.add('active'); }
+        setInterval(nextSlide, 5000);
+
+        const roleOptions = document.querySelectorAll('.role-option');
+        let selectedRole = 'nhanvien';
+        roleOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                roleOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                selectedRole = option.getAttribute('data-role');
+            });
+        });
+
+        const loginForm = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+
+        function showError(message) {
+            const existingError = document.querySelector('.error-message');
+            if (existingError) existingError.remove();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message bg-red-500/80 text-white text-sm p-3 rounded-xl mt-4 text-center';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>${message}`;
+            loginForm.appendChild(errorDiv);
+            document.querySelector('.glass-card').classList.add('shake');
+            setTimeout(() => document.querySelector('.glass-card').classList.remove('shake'), 300);
+            setTimeout(() => errorDiv.remove(), 3000);
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            if (!username || !password) { showError('Vui lòng nhập đầy đủ thông tin!'); return; }
+            
+            const btn = document.querySelector('.login-btn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang đăng nhập...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, role: selectedRole })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('userRole', selectedRole);
+                    localStorage.setItem('userName', data.user.HoTen);
+                    localStorage.setItem('userMaNV', data.user.MaNV);
+                    setTimeout(() => { window.location.href = selectedRole === 'nhanvien' ? 'nhanvien.html' : 'quantri.html'; }, 500);
+                } else {
+                    showError(data.message || 'Sai tên đăng nhập hoặc mật khẩu!');
+                    btn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i> Đăng nhập';
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('Không thể kết nối đến server!');
+                btn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i> Đăng nhập';
+                btn.disabled = false;
+            }
+        });
+
+        usernameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loginForm.dispatchEvent(new Event('submit')); });
+        passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loginForm.dispatchEvent(new Event('submit')); });
+    </script>
+</body>
+</html>

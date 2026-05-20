@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý - Cơm thố Anh Nguyễn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { transition: all 0.2s ease; }
+        body { background: #f0f2f5; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; height: 100vh; }
+        
+        .sidebar { 
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); 
+            height: 100vh;
+            overflow-y: auto;
+            position: fixed;
+            width: 260px;
+            z-index: 10;
+        }
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: #1e293b; }
+        .sidebar::-webkit-scrollbar-thumb { background: #ff8c42; border-radius: 4px; }
+        
+        .sidebar-item { 
+            transition: all 0.25s; 
+            cursor: pointer; 
+            border-radius: 10px; 
+            margin: 4px 12px; 
+            padding: 10px 14px; 
+            color: #cbd5e1; 
+            font-weight: 500;
+        }
+        .sidebar-item:hover { background: #ff8c42; color: white; transform: translateX(4px); }
+        .sidebar-item.active { background: #ff8c42; color: white; }
+        .sidebar-item i { width: 24px; margin-right: 12px; font-size: 16px; }
+        
+        .main-content { 
+            margin-left: 260px; 
+            padding: 16px 24px; 
+            height: 100vh; 
+            overflow-y: auto;
+            width: calc(100% - 260px);
+        }
+        .main-content::-webkit-scrollbar { width: 6px; }
+        .main-content::-webkit-scrollbar-track { background: #e2e8f0; }
+        .main-content::-webkit-scrollbar-thumb { background: #ff8c42; border-radius: 3px; }
+        
+        .card { background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+        
+        .stat-card { cursor: pointer; position: relative; overflow: hidden; }
+        .stat-card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 3px; background: #ff8c42; transition: width 0.3s; }
+        .stat-card:hover::after { width: 100%; }
+        
+        .btn-primary { background: #ff8c42; color: white; padding: 6px 16px; border-radius: 6px; font-weight: 500; border: none; cursor: pointer; font-size: 13px; }
+        .btn-primary:hover { background: #e07a2e; }
+        .btn-secondary { background: #e2e8f0; color: #1a2c3e; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .btn-secondary:hover { background: #cbd5e1; }
+        .btn-danger { background: #dc2626; color: white; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-success { background: #10b981; color: white; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .btn-success:hover { background: #059669; }
+        
+        .table-wrapper { overflow-x: auto; width: 100%; border-radius: 12px; max-height: 500px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8fafc; font-weight: 600; color: #1e293b; position: sticky; top: 0; }
+        tr:hover { background: #f8fafc; }
+        
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; border-radius: 20px; max-width: 550px; width: 90%; max-height: 85vh; overflow-y: auto; padding: 20px; }
+        input, select, textarea { border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 10px; width: 100%; outline: none; font-size: 13px; }
+        input:focus, select:focus { border-color: #ff8c42; }
+        
+        .status-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+        .status-active { background: #10b98120; color: #10b981; }
+        .status-inactive { background: #ef444420; color: #dc2626; }
+        .status-ongoing { background: #f59e0b20; color: #f59e0b; }
+        
+        .filter-bar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+        .two-col-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
+        .three-col-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+        
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .two-col-grid { grid-template-columns: 1fr; }
+            .three-col-grid { grid-template-columns: 1fr; }
+        }
+        
+        .chat-bubble { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: #ff8c42; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .chat-bubble:hover { transform: scale(1.05); }
+        .chat-window { position: fixed; bottom: 80px; right: 20px; width: 350px; height: 450px; background: white; border-radius: 12px; display: none; flex-direction: column; overflow: hidden; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .chat-header { background: #ff8c42; color: white; padding: 12px; font-weight: bold; }
+        .chat-messages { flex: 1; padding: 12px; overflow-y: auto; background: #f8fafc; font-size: 13px; }
+        .chat-input { display: flex; padding: 12px; background: white; border-top: 1px solid #e2e8f0; }
+        .chat-input input { flex: 1; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 20px; outline: none; }
+        .chat-input button { margin-left: 8px; background: #ff8c42; color: white; border: none; border-radius: 20px; padding: 8px 16px; cursor: pointer; }
+        .message-user { text-align: right; margin-bottom: 12px; }
+        .message-user span { background: #ff8c42; color: white; padding: 8px 12px; border-radius: 18px; display: inline-block; max-width: 80%; }
+        .message-ai { text-align: left; margin-bottom: 12px; }
+        .message-ai span { background: #e2e8f0; color: #1e293b; padding: 8px 12px; border-radius: 18px; display: inline-block; max-width: 80%; }
+    </style>
+</head>
+<body>
+    <div class="flex">
+        <div class="sidebar">
+            <div class="p-4 border-b border-white/10 text-center">
+                <i class="fas fa-utensils text-2xl text-[#ff8c42]"></i>
+                <h2 class="text-white text-sm font-bold mt-1">Cơm thố<br>Anh Nguyễn</h2>
+            </div>
+            <nav class="py-2">
+                <div class="sidebar-item active" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Tổng quan</div>
+                <div class="sidebar-item" data-page="monan"><i class="fas fa-pizza-slice"></i> Quản lý món</div>
+                <div class="sidebar-item" data-page="hoadon"><i class="fas fa-file-invoice-dollar"></i> Hóa đơn</div>
+                <div class="sidebar-item" data-page="nhanvien"><i class="fas fa-users"></i> Nhân viên</div>
+                <div class="sidebar-item" data-page="ban"><i class="fas fa-table"></i> Bàn ăn</div>
+                <div class="sidebar-item" data-page="baocao"><i class="fas fa-chart-bar"></i> Báo cáo</div>
+                <div class="sidebar-item" data-page="taikhoan"><i class="fas fa-user-cog"></i> Tài khoản</div>
+            </nav>
+            <div class="p-4 border-t border-white/10 mt-auto">
+                <div class="flex items-center gap-2 text-white">
+                    <i class="fas fa-user-circle text-xl"></i>
+                    <div><p class="text-xs font-medium" id="userName">Quản lý</p><p class="text-xs text-white/50">admin</p></div>
+                </div>
+                <button onclick="logout()" class="mt-2 w-full text-left text-white/50 hover:text-white text-xs"><i class="fas fa-sign-out-alt mr-1"></i> Đăng xuất</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                <h1 class="text-xl font-bold text-gray-800" id="pageTitle">Tổng quan</h1>
+                <div class="flex gap-3 items-center">
+                    <span class="text-xs text-gray-500"><i class="far fa-calendar-alt mr-1"></i> <span id="currentDate"></span></span>
+                    <button onclick="refreshCurrentPage()" class="text-gray-500 hover:text-orange-500"><i class="fas fa-sync-alt"></i></button>
+                </div>
+            </div>
+
+            <!-- Dashboard Page -->
+            <div id="dashboardPage" class="page-content">
+                <div class="stats-grid">
+                    <div class="card p-4 stat-card" onclick="showDetail('doanhthu')"><div><p class="text-gray-500 text-xs">Doanh thu hôm nay</p><p class="text-xl font-bold text-gray-800" id="revenueToday">0₫</p></div><i class="fas fa-chart-line text-xl text-green-500 float-right -mt-8"></i></div>
+                    <div class="card p-4 stat-card" onclick="showDetail('sodon')"><div><p class="text-gray-500 text-xs">Số đơn hôm nay</p><p class="text-xl font-bold text-gray-800" id="ordersToday">0</p></div><i class="fas fa-receipt text-xl text-blue-500 float-right -mt-8"></i></div>
+                    <div class="card p-4 stat-card" onclick="showDetail('ban')"><div><p class="text-gray-500 text-xs">Bàn đang phục vụ</p><p class="text-xl font-bold text-gray-800" id="activeTables">0</p></div><i class="fas fa-table text-xl text-orange-500 float-right -mt-8"></i></div>
+                    <div class="card p-4 stat-card" onclick="showDetail('nhanvien')"><div><p class="text-gray-500 text-xs">Nhân viên</p><p class="text-xl font-bold text-gray-800" id="staffCount">0</p></div><i class="fas fa-users text-xl text-purple-500 float-right -mt-8"></i></div>
+                </div>
+                
+                <div class="filter-bar">
+                    <button class="filter-btn active" data-filter="today">Hôm nay</button>
+                    <button class="filter-btn" data-filter="yesterday">Hôm qua</button>
+                    <button class="filter-btn" data-filter="week">7 ngày</button>
+                    <button class="filter-btn" data-filter="month">Tháng này</button>
+                </div>
+                
+                <div class="two-col-grid">
+                    <div class="card p-4"><h3 class="font-bold mb-2 text-sm"><i class="fas fa-chart-line text-orange-500 mr-1"></i>Doanh thu theo giờ</h3><canvas id="revenueChart" height="180"></canvas></div>
+                    <div class="card p-4"><h3 class="font-bold mb-2 text-sm"><i class="fas fa-chart-pie text-orange-500 mr-1"></i>Phương thức thanh toán</h3><canvas id="paymentMethodChart" height="180"></canvas></div>
+                </div>
+                
+                <div class="three-col-grid">
+                    <div class="card p-4"><h3 class="font-bold mb-2 text-sm"><i class="fas fa-trophy text-yellow-500 mr-1"></i>Top 5 món bán chạy (theo số lượng)</h3><div class="overflow-auto max-h-48"><table class="w-full text-xs"><thead><tr><th>#</th><th>Món</th><th>Số lượng</th><th>Doanh thu</th></tr></thead><tbody id="topMonTable"></tbody></table></div></div>
+                    <div class="card p-4"><h3 class="font-bold mb-2 text-sm"><i class="fas fa-chart-simple text-orange-500 mr-1"></i>Top 5 món bán chậm (theo số lượng)</h3><div class="overflow-auto max-h-48"><table class="w-full text-xs"><thead><tr><th>#</th><th>Món</th><th>Số lượng</th><th>Doanh thu</th></tr></thead><tbody id="slowMonTable"></tbody></table></div></div>
+                    <div class="card p-4"><h3 class="font-bold mb-2 text-sm"><i class="fas fa-clock text-red-500 mr-1"></i>Phiếu treo > 1 giờ</h3><div class="overflow-auto max-h-48"><table class="w-full text-xs"><thead><tr><th>Mã phiếu</th><th>Bàn</th><th>Thời gian</th><th>Nhân viên</th></tr></thead><tbody id="pendingPhieuTable"></tbody></table></div></div>
+                </div>
+                
+                <div class="three-col-grid mt-4">
+                    <div class="card p-4"><h3 class="font-bold mb-2 text-sm"><i class="fas fa-users text-blue-500 mr-1"></i>Doanh thu theo nhân viên</h3><div class="overflow-auto max-h-64"><table class="w-full text-sm"><thead><tr><th>Nhân viên</th><th>Số đơn</th><th>Doanh thu</th><th>Hiệu suất</th></tr></thead><tbody id="staffRevenueTable"></tbody></table></div></div>
+                    <div class="card p-4"><h3 class="font-bold mb-2 text-sm"><i class="fas fa-chart-line text-green-500 mr-1"></i>Giờ cao điểm</h3><canvas id="peakHourChart" height="160"></canvas><div class="mt-2 text-center text-sm" id="peakHourInfo"></div></div>
+                    <div class="card p-4"><h3 class="font-bold mb-2 text-sm"><i class="fas fa-chart-pie text-purple-500 mr-1"></i>Doanh thu theo danh mục</h3><canvas id="categoryRevenueChart" height="160"></canvas></div>
+                </div>
+                
+                <div class="card p-4 mt-4">
+                    <h3 class="font-bold mb-2 text-sm"><i class="fas fa-box text-red-500 mr-1"></i>Món đang ngừng bán</h3>
+                    <div class="overflow-auto max-h-48"><table class="w-full text-sm"><thead><tr><th>Mã</th><th>Tên món</th><th>Giá</th><th>Hành động</th></tr></thead><tbody id="stoppedMonTable"></tbody></table></div>
+                </div>
+            </div>
+
+            <!-- Quản lý món ăn Page -->
+            <div id="monanPage" class="page-content hidden">
+                <div class="card p-4">
+                    <div class="flex justify-between items-center mb-3"><h2 class="font-bold text-base">📋 Danh sách món ăn</h2><button onclick="showAddMonModal()" class="btn-primary"><i class="fas fa-plus mr-1"></i>Thêm món</button></div>
+                    <div class="filter-bar"><input type="text" id="searchMon" placeholder="🔍 Tìm món..." class="w-64"><select id="filterCategory" class="w-48"><option value="all">Tất cả danh mục</option></select><button onclick="loadMonAn()" class="btn-secondary">Tìm</button></div>
+                    <div class="table-wrapper"><table><thead><tr><th>Mã</th><th>Tên món</th><th>Danh mục</th><th>Đơn giá</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="monanTable"></tbody></table></div>
+                </div>
+            </div>
+
+            <!-- Hóa đơn Page -->
+            <div id="hoadonPage" class="page-content hidden">
+                <div class="card p-4"><h2 class="font-bold text-base mb-3">🧾 Danh sách hóa đơn</h2>
+                <div class="filter-bar"><input type="text" id="searchHD" placeholder="🔍 Tìm theo mã hoặc bàn..." class="w-64"><input type="date" id="filterDate" class="w-40"><button onclick="loadHoaDon()" class="btn-secondary">Tìm</button></div>
+                <div class="table-wrapper"><table><thead><tr><th>Mã HD</th><th>Thời gian</th><th>Bàn</th><th>Tổng tiền</th><th>Phương thức</th><th>Nhân viên</th><th>Chi tiết</th></tr></thead><tbody id="hoadonTable"></tbody></table></div></div>
+            </div>
+
+            <!-- Quản lý nhân viên Page -->
+            <div id="nhanvienPage" class="page-content hidden">
+                <div class="card p-4"><div class="flex justify-between items-center mb-3"><h2 class="font-bold text-base">👥 Danh sách nhân viên</h2><button onclick="showAddNVModal()" class="btn-primary"><i class="fas fa-plus mr-1"></i>Thêm</button></div>
+                <div class="table-wrapper"><table><thead><tr><th>Mã</th><th>Họ tên</th><th>SĐT</th><th>Tên đăng nhập</th><th>Vai trò</th><th>Doanh thu</th><th>Số đơn</th><th>Xóa</th></tr></thead><tbody id="nhanvienTable"></tbody></table></div></div>
+                <div class="card p-4 mt-4"><h2 class="font-bold text-base mb-3">🔐 Đổi mật khẩu / Tên đăng nhập</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3"><div><select id="selectNV" class="text-sm"></select></div><div><input type="text" id="newUsername" placeholder="Tên đăng nhập mới" class="text-sm"></div><div><input type="password" id="newPassword" placeholder="Mật khẩu mới" class="text-sm"></div><div><button onclick="updateAccount()" class="btn-primary w-full">Cập nhật</button></div></div></div>
+            </div>
+
+            <!-- Quản lý bàn Page -->
+            <div id="banPage" class="page-content hidden">
+                <div class="card p-4"><div class="flex justify-between items-center mb-3"><h2 class="font-bold text-base">🪑 Danh sách bàn</h2><button onclick="showAddBanModal()" class="btn-primary"><i class="fas fa-plus mr-1"></i>Thêm</button></div>
+                <div class="table-wrapper"><table><thead><tr><th>Mã</th><th>Tên bàn</th><th>Số chỗ</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="banTable"></tbody></table></div></div>
+            </div>
+
+            <!-- Báo cáo Page -->
+            <div id="baocaoPage" class="page-content hidden">
+                <div class="card p-4">
+                    <h2 class="font-bold text-base mb-3">📊 BÁO CÁO DOANH THU</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                        <select id="filterDanhMucReport" class="text-sm"><option value="all">📂 Tất cả danh mục</option></select>
+                        <select id="filterNhanVienReport" class="text-sm"><option value="all">👤 Tất cả nhân viên</option></select>
+                        <select id="filterBanReport" class="text-sm"><option value="all">🪑 Tất cả bàn</option></select>
+                        <div class="flex gap-2 col-span-2"><input type="date" id="fromDate" class="text-sm flex-1"><input type="date" id="toDate" class="text-sm flex-1"></div>
+                    </div>
+                    <button onclick="generateFullReport()" class="btn-primary mb-4"><i class="fas fa-chart-line mr-1"></i>Tạo báo cáo</button>
+                    <div id="printPreview" class="print-area border rounded-lg p-3 bg-white overflow-auto" style="max-height: 550px;"><div id="reportContent"></div></div>
+                    <button onclick="printReport()" class="btn-secondary mt-3"><i class="fas fa-print mr-1"></i>In báo cáo</button>
+                </div>
+            </div>
+
+            <!-- Tài khoản Page -->
+            <div id="taikhoanPage" class="page-content hidden">
+                <div class="card p-4 max-w-md mx-auto"><h2 class="font-bold text-base mb-3 text-center">⚙️ Quản lý tài khoản</h2>
+                <div class="mb-3"><label class="text-sm">Tên đăng nhập</label><input type="text" id="profileUsername" class="text-sm mt-1 bg-gray-100" readonly value="admin"></div>
+                <div class="mb-3"><label class="text-sm">Mật khẩu cũ</label><input type="password" id="oldPassword" class="text-sm mt-1" placeholder="Nhập mật khẩu cũ"></div>
+                <div class="mb-3"><label class="text-sm">Mật khẩu mới</label><input type="password" id="newPasswordSelf" class="text-sm mt-1" placeholder="Nhập mật khẩu mới"></div>
+                <div class="mb-3"><label class="text-sm">Xác nhận</label><input type="password" id="confirmPassword" class="text-sm mt-1" placeholder="Xác nhận mật khẩu mới"></div>
+                <button onclick="changeSelfPassword()" class="btn-primary w-full">Đổi mật khẩu</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="monModal" class="modal hidden"><div class="modal-content"><h3 class="font-bold text-base mb-3" id="monModalTitle">Thêm món ăn</h3><input type="hidden" id="editMaMon"><div class="mb-2"><label>Tên món</label><input type="text" id="monTen" class="text-sm mt-1"></div><div class="mb-2"><label>Danh mục</label><select id="monDanhMuc" class="text-sm mt-1"></select></div><div class="mb-2"><label>Đơn giá</label><input type="number" id="monDonGia" class="text-sm mt-1"></div><div class="mb-2"><label>Mô tả</label><textarea id="monMoTa" rows="2" class="text-sm mt-1"></textarea></div><div class="mb-2"><label>Trạng thái</label><select id="monTrangThai" class="text-sm mt-1"><option value="Còn bán">Còn bán</option><option value="Ngừng bán">Ngừng bán</option></select></div><div class="flex gap-2 mt-3"><button onclick="saveMonAn()" class="btn-primary flex-1">Lưu</button><button onclick="closeModal('monModal')" class="btn-secondary flex-1">Hủy</button></div></div></div>
+
+    <div id="banModal" class="modal hidden"><div class="modal-content"><h3 class="font-bold text-base mb-3" id="banModalTitle">Thêm bàn ăn</h3><input type="hidden" id="editMaBan"><div class="mb-2"><label>Tên bàn</label><input type="text" id="banTen" class="text-sm mt-1"></div><div class="mb-2"><label>Số chỗ</label><input type="number" id="banSoCho" class="text-sm mt-1"></div><div class="mb-2"><label>Trạng thái</label><select id="banTrangThai" class="text-sm mt-1"><option value="Trống">Trống</option><option value="Đang phục vụ">Đang phục vụ</option></select></div><div class="flex gap-2 mt-3"><button onclick="saveBanAn()" class="btn-primary flex-1">Lưu</button><button onclick="closeModal('banModal')" class="btn-secondary flex-1">Hủy</button></div></div></div>
+
+    <div id="nhanvienModal" class="modal hidden"><div class="modal-content"><h3 class="font-bold text-base mb-3">Thêm nhân viên</h3><div class="mb-2"><label>Họ tên</label><input type="text" id="nvHoTen" class="text-sm mt-1"></div><div class="mb-2"><label>SĐT</label><input type="text" id="nvSDT" class="text-sm mt-1"></div><div class="mb-2"><label>Tên đăng nhập</label><input type="text" id="nvUsername" class="text-sm mt-1"></div><div class="mb-2"><label>Mật khẩu</label><input type="password" id="nvPassword" class="text-sm mt-1" value="123456"></div><div class="mb-2"><label>Vai trò</label><select id="nvVaiTro" class="text-sm mt-1"><option value="Nhân viên">Nhân viên</option><option value="Quản lý">Quản lý</option></select></div><div class="flex gap-2 mt-3"><button onclick="saveNhanVien()" class="btn-primary flex-1">Lưu</button><button onclick="closeModal('nhanvienModal')" class="btn-secondary flex-1">Hủy</button></div></div></div>
+
+    <!-- Chat AI -->
+    <div class="chat-bubble" id="chatBubble"><i class="fas fa-robot text-white text-xl"></i></div>
+    <div class="chat-window" id="chatWindow"><div class="chat-header">AI Assistant <button class="float-right" id="closeChat" style="background:none; border:none; color:white; cursor:pointer;">✕</button></div><div class="chat-messages" id="chatMessages"><div class="message-ai"><span>👋 Xin chào! Tôi có thể giúp gì cho anh/chị?</span></div></div><div class="chat-input"><input type="text" id="chatInput" placeholder="Hỏi về doanh thu, nhân viên..."><button id="sendChat">Gửi</button></div></div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let currentPage = 'dashboard';
+        let currentFilter = 'today';
+        let revenueChart, paymentMethodChart, peakHourChart, categoryRevenueChart;
+        
+        // Data stores
+        let danhMucData = [];
+        let nhanVienData = [];
+        let monAnData = [];
+        let banAnData = [];
+        let hoaDonData = [];
+        let allPhieuData = [];
+        let chiTietPhieuMap = {};
+        
+        function formatMoney(amount) {
+            return (amount || 0).toLocaleString('vi-VN') + '₫';
+        }
+        
+        async function fetchAPI(endpoint) {
+            try {
+                const res = await fetch(`${API_URL}${endpoint}`);
+                if (!res.ok) {
+                    console.error(`API ${endpoint} trả về lỗi ${res.status}`);
+                    return [];
+                }
+                return await res.json();
+            } catch(e) {
+                console.error(`Lỗi fetch ${endpoint}:`, e);
+                return [];
+            }
+        }
+        
+        async function loadChiTietPhieu(maPhieu) {
+            if (!maPhieu) return [];
+            if (chiTietPhieuMap[maPhieu]) return chiTietPhieuMap[maPhieu];
+            try {
+                const data = await fetchAPI(`/chitietphieu/${maPhieu}`);
+                chiTietPhieuMap[maPhieu] = data;
+                return data;
+            } catch(e) { return []; }
+        }
+        
+        async function loadAllData() {
+            console.log('Đang tải dữ liệu...');
+            
+            // Load tất cả dữ liệu song song
+            const [dm, nv, mon, ban, hd, phieu] = await Promise.all([
+                fetchAPI('/danhmuc'),
+                fetchAPI('/nhanvien'),
+                fetchAPI('/monan'),
+                fetchAPI('/banan'),
+                fetchAPI('/hoadon'),
+                fetchAPI('/phieuall')
+            ]);
+            
+            danhMucData = dm;
+            nhanVienData = nv;
+            monAnData = mon;
+            banAnData = ban;
+            hoaDonData = hd;
+            allPhieuData = phieu;
+            
+            console.log('Dữ liệu đã tải:', {
+                danhMuc: danhMucData.length,
+                nhanVien: nhanVienData.length,
+                monAn: monAnData.length,
+                banAn: banAnData.length,
+                hoaDon: hoaDonData.length,
+                phieu: allPhieuData.length
+            });
+            
+            // Load chi tiết phiếu cho từng hóa đơn
+            for (let hd of hoaDonData) {
+                hd.Items = await loadChiTietPhieu(hd.MaPhieu);
+            }
+            
+            // Cập nhật UI
+            document.getElementById('staffCount').innerText = nhanVienData.length;
+            document.getElementById('activeTables').innerText = banAnData.filter(b => b.TrangThaiBan === 'Đang phục vụ').length;
+            document.getElementById('userName').innerText = localStorage.getItem('userName') || 'Quản lý';
+            
+            // Cập nhật dropdown báo cáo
+            const dmHtml = '<option value="all">📂 Tất cả danh mục</option>' + danhMucData.map(d => `<option value="${d.MaDanhMuc}">${d.TenDanhMuc}</option>`).join('');
+            const nvHtml = '<option value="all">👤 Tất cả nhân viên</option>' + nhanVienData.map(n => `<option value="${n.MaNV}">${n.HoTen}</option>`).join('');
+            const banHtml = '<option value="all">🪑 Tất cả bàn</option>' + banAnData.map(b => `<option value="${b.MaBan}">${b.TenBan}</option>`).join('');
+            
+            document.getElementById('filterDanhMucReport').innerHTML = dmHtml;
+            document.getElementById('filterNhanVienReport').innerHTML = nvHtml;
+            document.getElementById('filterBanReport').innerHTML = banHtml;
+            
+            // Load các bảng
+            loadMonAn();
+            loadHoaDon();
+            loadNhanVien();
+            loadBanAn();
+            refreshDashboard();
+        }
+        
+        function getFilteredData() {
+            const today = new Date().toISOString().slice(0,10);
+            const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+            const weekAgo = new Date(Date.now() - 7*86400000).toISOString().slice(0,10);
+            const thisMonth = today.slice(0,7);
+            
+            if (currentFilter === 'today') return hoaDonData.filter(h => h.ThoiGianThanhToan?.slice(0,10) === today);
+            if (currentFilter === 'yesterday') return hoaDonData.filter(h => h.ThoiGianThanhToan?.slice(0,10) === yesterday);
+            if (currentFilter === 'week') return hoaDonData.filter(h => h.ThoiGianThanhToan?.slice(0,10) >= weekAgo);
+            if (currentFilter === 'month') return hoaDonData.filter(h => h.ThoiGianThanhToan?.slice(0,7) === thisMonth);
+            return hoaDonData;
+        }
+        
+        function loadDashboardStats() {
+            const today = new Date().toISOString().slice(0,10);
+            const todayHD = hoaDonData.filter(h => h.ThoiGianThanhToan?.slice(0,10) === today);
+            document.getElementById('revenueToday').innerText = formatMoney(todayHD.reduce((s,h)=>s+(h.TongTien||0),0));
+            document.getElementById('ordersToday').innerText = todayHD.length;
+        }
+        
+        function showDetail(type) {
+            const today = new Date().toISOString().slice(0,10);
+            const todayHD = hoaDonData.filter(h => h.ThoiGianThanhToan?.slice(0,10) === today);
+            if (type === 'doanhthu') alert(`📊 DOANH THU HÔM NAY: ${formatMoney(todayHD.reduce((s,h)=>s+(h.TongTien||0),0))}\nSố đơn: ${todayHD.length}`);
+            else if (type === 'sodon') alert(`📋 SỐ ĐƠN HÔM NAY: ${todayHD.length}`);
+            else if (type === 'ban') alert(`🪑 BÀN ĐANG PHỤC VỤ: ${banAnData.filter(b=>b.TrangThaiBan==='Đang phục vụ').length}/${banAnData.length}`);
+            else if (type === 'nhanvien') alert(`👥 NHÂN VIÊN: ${nhanVienData.length}`);
+        }
+        
+        // Biểu đồ
+        function updateRevenueChart() {
+            const filtered = getFilteredData();
+            const hours = Array(24).fill(0);
+            filtered.forEach(hd => {
+                const hour = parseInt(hd.ThoiGianThanhToan?.split(' ')[1]?.split(':')[0] || 0);
+                hours[hour] += hd.TongTien || 0;
+            });
+            if(revenueChart) revenueChart.destroy();
+            const ctx = document.getElementById('revenueChart');
+            if(ctx) {
+                revenueChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: Array.from({length:24}, (_,i)=>`${i}h`), datasets: [{ label: 'Doanh thu', data: hours, backgroundColor: '#ff8c42' }] },
+                    options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: (ctx) => formatMoney(ctx.raw) } } } }
+                });
+            }
+        }
+        
+        function updatePaymentMethodChart() {
+            const filtered = getFilteredData();
+            const methods = { 'Tiền mặt': 0, 'Chuyển khoản': 0, 'Thẻ': 0 };
+            filtered.forEach(hd => { if (hd.PhuongThucThanhToan) methods[hd.PhuongThucThanhToan] += hd.TongTien || 0; });
+            if(paymentMethodChart) paymentMethodChart.destroy();
+            const ctx = document.getElementById('paymentMethodChart');
+            if(ctx) {
+                paymentMethodChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: { labels: Object.keys(methods), datasets: [{ data: Object.values(methods), backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6'] }] },
+                    options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${formatMoney(ctx.raw)}` } } } }
+                });
+            }
+        }
+        
+        function updatePeakHourChart() {
+            const hours = Array(24).fill(0);
+            hoaDonData.forEach(hd => {
+                const hour = parseInt(hd.ThoiGianThanhToan?.split(' ')[1]?.split(':')[0] || 0);
+                hours[hour] += hd.TongTien || 0;
+            });
+            if(peakHourChart) peakHourChart.destroy();
+            const ctx = document.getElementById('peakHourChart');
+            if(ctx) {
+                peakHourChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: Array.from({length:24}, (_,i)=>`${i}h`), datasets: [{ label: 'Doanh thu', data: hours, borderColor: '#ff8c42', fill: true, backgroundColor: '#ff8c4220' }] },
+                    options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: (ctx) => formatMoney(ctx.raw) } } } }
+                });
+            }
+            const maxHour = hours.indexOf(Math.max(...hours));
+            document.getElementById('peakHourInfo').innerHTML = `🔥 Giờ cao điểm nhất: <strong>${maxHour}h</strong> - ${formatMoney(Math.max(...hours))}`;
+        }
+        
+        function updateCategoryRevenueChart() {
+            const catRevenue = { 'Món chính': 0, 'Món gọi thêm': 0, 'Đồ uống': 0 };
+            for (let hd of hoaDonData) {
+                if (hd.Items) {
+                    for (let item of hd.Items) {
+                        const mon = monAnData.find(m => m.MaMon === item.MaMon);
+                        if (mon) {
+                            if (mon.MaDanhMuc === 'DM01') catRevenue['Món chính'] += item.SoLuong * item.DonGia;
+                            else if (mon.MaDanhMuc === 'DM02') catRevenue['Món gọi thêm'] += item.SoLuong * item.DonGia;
+                            else catRevenue['Đồ uống'] += item.SoLuong * item.DonGia;
+                        }
+                    }
+                }
+            }
+            if(categoryRevenueChart) categoryRevenueChart.destroy();
+            const ctx = document.getElementById('categoryRevenueChart');
+            if(ctx) {
+                categoryRevenueChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: { labels: Object.keys(catRevenue), datasets: [{ data: Object.values(catRevenue), backgroundColor: ['#ff8c42', '#10b981', '#3b82f6'] }] },
+                    options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${formatMoney(ctx.raw)}` } } } }
+                });
+            }
+        }
+        
+        // Top món bán chạy/chậm
+        function updateTopMon() {
+            const filtered = getFilteredData();
+            const stats = {};
+            for (let hd of filtered) {
+                if (hd.Items) {
+                    for (let item of hd.Items) {
+                        const mon = monAnData.find(m => m.MaMon === item.MaMon);
+                        if (mon) {
+                            if (!stats[mon.TenMon]) stats[mon.TenMon] = { ten: mon.TenMon, sl: 0, dt: 0 };
+                            stats[mon.TenMon].sl += item.SoLuong;
+                            stats[mon.TenMon].dt += item.SoLuong * item.DonGia;
+                        }
+                    }
+                }
+            }
+            const top = Object.values(stats).sort((a,b)=>b.sl - a.sl).slice(0,5);
+            document.getElementById('topMonTable').innerHTML = top.map((m,idx)=>`<tr><td class="text-center">${idx+1}</td><td>${m.ten}</td><td class="text-center font-bold text-green-600">${m.sl}</td><td class="text-right">${formatMoney(m.dt)}</td></tr>`).join('');
+            if(top.length === 0) document.getElementById('topMonTable').innerHTML = '<tr><td colspan="4" class="text-center">📭 Chưa có dữ liệu</td></tr>';
+        }
+        
+        function updateSlowMon() {
+            const filtered = getFilteredData();
+            const stats = {};
+            for (let hd of filtered) {
+                if (hd.Items) {
+                    for (let item of hd.Items) {
+                        const mon = monAnData.find(m => m.MaMon === item.MaMon);
+                        if (mon) {
+                            if (!stats[mon.TenMon]) stats[mon.TenMon] = { ten: mon.TenMon, sl: 0, dt: 0 };
+                            stats[mon.TenMon].sl += item.SoLuong;
+                            stats[mon.TenMon].dt += item.SoLuong * item.DonGia;
+                        }
+                    }
+                }
+            }
+            const slow = Object.values(stats).filter(m => m.sl > 0).sort((a,b)=>a.sl - b.sl).slice(0,5);
+            document.getElementById('slowMonTable').innerHTML = slow.map((m,idx)=>`<tr><td class="text-center">${idx+1}</td><td>${m.ten}</td><td class="text-center font-bold text-red-500">${m.sl}</td><td class="text-right">${formatMoney(m.dt)}</td></tr>`).join('');
+            if(slow.length === 0) document.getElementById('slowMonTable').innerHTML = '<tr><td colspan="4" class="text-center">📭 Chưa có dữ liệu</td></tr>';
+        }
+        
+        function updatePendingPhieu() {
+            const now = new Date();
+            const pending = allPhieuData.filter(p => {
+                if (p.TrangThaiPhieu !== 'Đang xử lý') return false;
+                const timeGoi = new Date(p.ThoiGianGoiMon);
+                const diffHours = (now - timeGoi) / (1000 * 60 * 60);
+                return diffHours > 1;
+            });
+            document.getElementById('pendingPhieuTable').innerHTML = pending.map(p => {
+                const ban = banAnData.find(b => b.MaBan === p.MaBan);
+                const nv = nhanVienData.find(n => n.MaNV === p.MaNV);
+                return `<tr><td class="font-mono">${p.MaPhieu}</td><td>${ban?.TenBan || p.MaBan}</td><td>${new Date(p.ThoiGianGoiMon).toLocaleString()}</td><td>${nv?.HoTen || p.MaNV}</td></tr>`;
+            }).join('');
+            if(pending.length === 0) document.getElementById('pendingPhieuTable').innerHTML = '<tr><td colspan="4" class="text-center">✅ Không có phiếu treo</td></tr>';
+        }
+        
+        function updateStaffRevenue() {
+            const staffStats = {};
+            nhanVienData.forEach(n => { staffStats[n.MaNV] = { ten: n.HoTen, soDon: 0, doanhThu: 0 }; });
+            hoaDonData.forEach(hd => {
+                if (staffStats[hd.MaNV]) {
+                    staffStats[hd.MaNV].soDon++;
+                    staffStats[hd.MaNV].doanhThu += hd.TongTien || 0;
+                }
+            });
+            const avgRevenue = Object.values(staffStats).reduce((s,n)=>s+n.doanhThu,0) / (Object.values(staffStats).length || 1);
+            const sorted = Object.values(staffStats).sort((a,b)=>b.doanhThu - a.doanhThu);
+            document.getElementById('staffRevenueTable').innerHTML = sorted.map(s => {
+                const performance = s.doanhThu >= avgRevenue ? '✅ Tốt' : '⚠️ Dưới TB';
+                return `<tr><td>${s.ten}</td><td class="text-center">${s.soDon}</td><td class="text-right font-bold text-orange-600">${formatMoney(s.doanhThu)}</td><td class="text-center">${performance}</td></tr>`;
+            }).join('');
+        }
+        
+        function updateStoppedMon() {
+            const stopped = monAnData.filter(m => m.TrangThaiMon === 'Ngừng bán');
+            document.getElementById('stoppedMonTable').innerHTML = stopped.map(m => `
+                <tr><td class="font-mono">${m.MaMon}</td><td>${m.TenMon}</td><td class="text-right">${formatMoney(m.DonGia)}</td>
+                <td><button onclick="enableMon('${m.MaMon}')" class="btn-success text-white px-2 py-1 rounded text-xs"><i class="fas fa-play mr-1"></i>Kích hoạt</button></td></tr>
+            `).join('');
+            if(stopped.length === 0) document.getElementById('stoppedMonTable').innerHTML = '<tr><td colspan="4" class="text-center">✅ Không có món ngừng bán</td></tr>';
+        }
+        
+        async function enableMon(maMon) {
+            const mon = monAnData.find(m => m.MaMon === maMon);
+            if(confirm(`Kích hoạt món "${mon.TenMon}"?`)) {
+                try {
+                    await fetch(`${API_URL}/monan/${maMon}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...mon, TrangThaiMon: 'Còn bán' })
+                    });
+                    await loadAllData();
+                    alert('Đã kích hoạt món!');
+                } catch(e) { alert('Lỗi!'); }
+            }
+        }
+        
+        // ========== QUẢN LÝ MÓN ĂN ==========
+        async function loadMonAn() {
+            const search = document.getElementById('searchMon').value.toLowerCase();
+            const cat = document.getElementById('filterCategory').value;
+            let filtered = [...monAnData];
+            if(search) filtered = filtered.filter(m=>m.TenMon.toLowerCase().includes(search)||m.MaMon.toLowerCase().includes(search));
+            if(cat !== 'all') filtered = filtered.filter(m=>m.MaDanhMuc === cat);
+            
+            document.getElementById('monanTable').innerHTML = filtered.map(m => `
+                <tr><td class="font-mono">${m.MaMon}</td><td>${m.TenMon}</td><td>${m.TenDanhMuc || ''}</td>
+                <td class="text-orange-600 font-bold">${formatMoney(m.DonGia)}</td>
+                <td><span class="status-badge ${m.TrangThaiMon==='Còn bán'?'status-active':'status-inactive'}">${m.TrangThaiMon}</span></td>
+                <td><button onclick="editMonAn('${m.MaMon}')" class="text-blue-600 mr-2"><i class="fas fa-edit"></i></button>
+                <button onclick="deleteMonAn('${m.MaMon}')" class="text-red-600"><i class="fas fa-trash"></i></button></td></tr>
+            `).join('');
+            if(filtered.length === 0) document.getElementById('monanTable').innerHTML = '<tr><td colspan="6" class="text-center">📭 Không có dữ liệu</td></tr>';
+        }
+        
+        function editMonAn(id) {
+            const m = monAnData.find(m=>m.MaMon===id);
+            if(m) {
+                document.getElementById('editMaMon').value = m.MaMon;
+                document.getElementById('monTen').value = m.TenMon;
+                document.getElementById('monDanhMuc').value = m.MaDanhMuc;
+                document.getElementById('monDonGia').value = m.DonGia;
+                document.getElementById('monMoTa').value = m.MoTa || '';
+                document.getElementById('monTrangThai').value = m.TrangThaiMon;
+                document.getElementById('monModalTitle').innerText = 'Sửa món ăn';
+                document.getElementById('monModal').classList.remove('hidden');
+            }
+        }
+        
+        async function saveMonAn() {
+            const id = document.getElementById('editMaMon').value;
+            const data = {
+                TenMon: document.getElementById('monTen').value,
+                DonGia: parseFloat(document.getElementById('monDonGia').value),
+                MaDanhMuc: document.getElementById('monDanhMuc').value,
+                TrangThaiMon: document.getElementById('monTrangThai').value,
+                MoTa: document.getElementById('monMoTa').value
+            };
+            try {
+                if (id) {
+                    await fetch(`${API_URL}/monan/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                } else {
+                    await fetch(`${API_URL}/monan`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                }
+                await loadAllData();
+                closeModal('monModal');
+                alert('Lưu thành công!');
+            } catch(e) { alert('Lỗi!'); }
+        }
+        
+        async function deleteMonAn(id) {
+            if(confirm('Xóa món này?')) {
+                await fetch(`${API_URL}/monan/${id}`, { method: 'DELETE' });
+                await loadAllData();
+                alert('Xóa thành công!');
+            }
+        }
+        
+        // ========== HÓA ĐƠN ==========
+        async function loadHoaDon() {
+            const search = document.getElementById('searchHD').value.toLowerCase();
+            const date = document.getElementById('filterDate').value;
+            let filtered = [...hoaDonData];
+            if(search) filtered = filtered.filter(h=>h.MaHD?.toLowerCase().includes(search)||h.TenBan?.toLowerCase().includes(search));
+            if(date) filtered = filtered.filter(h=>h.ThoiGianThanhToan?.slice(0,10) === date);
+            
+            const nvMap = Object.fromEntries(nhanVienData.map(n=>[n.MaNV, n.HoTen]));
+            document.getElementById('hoadonTable').innerHTML = filtered.map(h => `
+                <tr><td class="font-mono">${h.MaHD}</td><td>${h.ThoiGianThanhToan || ''}</td><td>${h.TenBan || ''}</td>
+                <td class="text-orange-600 font-bold">${formatMoney(h.TongTien)}</td><td>${h.PhuongThucThanhToan || 'Tiền mặt'}</td>
+                <td>${nvMap[h.MaNV] || ''}</td>
+                <td><button onclick="viewChiTiet('${h.MaHD}')" class="text-orange-600"><i class="fas fa-eye"></i></button></td></tr>
+            `).join('');
+            if(filtered.length === 0) document.getElementById('hoadonTable').innerHTML = '<tr><td colspan="7" class="text-center">📭 Không có dữ liệu</td></tr>';
+        }
+        
+        function viewChiTiet(MaHD) {
+            const hd = hoaDonData.find(h=>h.MaHD === MaHD);
+            if(hd && hd.Items && hd.Items.length > 0) {
+                const nv = nhanVienData.find(n=>n.MaNV === hd.MaNV);
+                alert(`📄 HÓA ĐƠN ${hd.MaHD}\n📅 ${hd.ThoiGianThanhToan}\n🪑 ${hd.TenBan}\n💰 ${formatMoney(hd.TongTien)}\n💳 ${hd.PhuongThucThanhToan}\n👤 NV: ${nv?.HoTen || ''}\n\n🍽️ CHI TIẾT:\n${hd.Items.map(i=>`   • ${monAnData.find(m=>m.MaMon===i.MaMon)?.TenMon||i.MaMon} x${i.SoLuong} = ${formatMoney(i.SoLuong*i.DonGia)}`).join('\n')}`);
+            } else {
+                alert('Không tìm thấy chi tiết');
+            }
+        }
+        
+        // ========== QUẢN LÝ NHÂN VIÊN ==========
+        function loadNhanVien() {
+            const staffRevenue = {};
+            hoaDonData.forEach(hd => {
+                if(staffRevenue[hd.MaNV]) {
+                    staffRevenue[hd.MaNV].soDon++;
+                    staffRevenue[hd.MaNV].doanhThu += hd.TongTien;
+                } else {
+                    staffRevenue[hd.MaNV] = { soDon: 1, doanhThu: hd.TongTien };
+                }
+            });
+            
+            document.getElementById('nhanvienTable').innerHTML = nhanVienData.map(n => `
+                <tr><td class="font-mono">${n.MaNV}</td><td>${n.HoTen}</td><td>${n.SDT}</td><td>${n.TenDangNhap}</td>
+                <td>${n.VaiTro}</td><td class="text-right font-bold text-orange-600">${formatMoney(staffRevenue[n.MaNV]?.doanhThu || 0)}</td>
+                <td class="text-center">${staffRevenue[n.MaNV]?.soDon || 0}</td>
+                <td><button onclick="deleteNhanVien('${n.MaNV}')" class="text-red-600"><i class="fas fa-trash"></i></button></td></tr>
+            `).join('');
+            
+            document.getElementById('selectNV').innerHTML = '<option value="">-- Chọn nhân viên --</option>' + nhanVienData.map(n=>`<option value="${n.MaNV}">${n.HoTen} (${n.TenDangNhap})</option>`).join('');
+        }
+        
+        async function saveNhanVien() {
+            const data = {
+                HoTen: document.getElementById('nvHoTen').value,
+                SDT: document.getElementById('nvSDT').value,
+                TenDangNhap: document.getElementById('nvUsername').value,
+                MatKhau: document.getElementById('nvPassword').value,
+                VaiTro: document.getElementById('nvVaiTro').value
+            };
+            try {
+                await fetch(`${API_URL}/nhanvien`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                await loadAllData();
+                closeModal('nhanvienModal');
+                alert('Thêm thành công!');
+            } catch(e) { alert('Lỗi!'); }
+        }
+        
+        async function deleteNhanVien(id) {
+            if(confirm('Xóa nhân viên này?')) {
+                await fetch(`${API_URL}/nhanvien/${id}`, { method: 'DELETE' });
+                await loadAllData();
+                alert('Xóa thành công!');
+            }
+        }
+        
+        async function updateAccount() {
+            const ma = document.getElementById('selectNV').value;
+            if (!ma) { alert('Chọn nhân viên!'); return; }
+            const newUsername = document.getElementById('newUsername').value;
+            if (newUsername) {
+                await fetch(`${API_URL}/nhanvien/${ma}/username`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ TenDangNhap: newUsername })
+                });
+            }
+            const newPassword = document.getElementById('newPassword').value;
+            if (newPassword) {
+                await fetch(`${API_URL}/nhanvien/${ma}/password`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ MatKhau: newPassword })
+                });
+            }
+            await loadAllData();
+            alert('Cập nhật thành công!');
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+        }
+        
+        // ========== QUẢN LÝ BÀN ==========
+        function loadBanAn() {
+            if (!banAnData || banAnData.length === 0) {
+                document.getElementById('banTable').innerHTML = '<tr><td colspan="5" class="text-center text-red-500">⚠️ Không có dữ liệu bàn. Vui lòng kiểm tra database!</td></tr>';
+                return;
+            }
+            document.getElementById('banTable').innerHTML = banAnData.map(b => `
+                <tr><td class="font-mono">${b.MaBan}</td><td class="font-bold">${b.TenBan}</td><td class="text-center">${b.SoChoNgoi}</td>
+                <td><span class="status-badge ${b.TrangThaiBan==='Đang phục vụ'?'status-ongoing':'status-active'}">${b.TrangThaiBan}</span></td>
+                <td><button onclick="editBanAn('${b.MaBan}')" class="text-blue-600 mr-2"><i class="fas fa-edit"></i></button>
+                <button onclick="deleteBanAn('${b.MaBan}')" class="text-red-600"><i class="fas fa-trash"></i></button></td></tr>
+            `).join('');
+        }
+        
+        function editBanAn(id) {
+            const b = banAnData.find(b=>b.MaBan === id);
+            if(b) {
+                document.getElementById('editMaBan').value = b.MaBan;
+                document.getElementById('banTen').value = b.TenBan;
+                document.getElementById('banSoCho').value = b.SoChoNgoi;
+                document.getElementById('banTrangThai').value = b.TrangThaiBan;
+                document.getElementById('banModalTitle').innerText = 'Sửa bàn ăn';
+                document.getElementById('banModal').classList.remove('hidden');
+            }
+        }
+        
+        async function saveBanAn() {
+            const id = document.getElementById('editMaBan').value;
+            const data = {
+                TenBan: document.getElementById('banTen').value,
+                SoChoNgoi: parseInt(document.getElementById('banSoCho').value),
+                TrangThaiBan: document.getElementById('banTrangThai').value
+            };
+            try {
+                if (id) {
+                    await fetch(`${API_URL}/banan/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                } else {
+                    await fetch(`${API_URL}/banan`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                }
+                await loadAllData();
+                closeModal('banModal');
+                alert('Lưu thành công!');
+            } catch(e) { alert('Lỗi!'); }
+        }
+        
+        function deleteBanAn(id) {
+            if(confirm('Xóa bàn?')) {
+                banAnData = banAnData.filter(b=>b.MaBan !== id);
+                loadBanAn();
+            }
+        }
+        
+        // ========== BÁO CÁO ==========
+        async function generateFullReport() {
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            const dmFilter = document.getElementById('filterDanhMucReport').value;
+            const nvFilter = document.getElementById('filterNhanVienReport').value;
+            const banFilter = document.getElementById('filterBanReport').value;
+            
+            let filtered = [...hoaDonData];
+            
+            if(fromDate) filtered = filtered.filter(h => h.ThoiGianThanhToan?.slice(0,10) >= fromDate);
+            if(toDate) filtered = filtered.filter(h => h.ThoiGianThanhToan?.slice(0,10) <= toDate);
+            if(nvFilter !== 'all') filtered = filtered.filter(h => h.MaNV === nvFilter);
+            if(banFilter !== 'all') {
+                filtered = filtered.filter(h => {
+                    const phieu = allPhieuData.find(p => p.MaPhieu === h.MaPhieu);
+                    return phieu && phieu.MaBan === banFilter;
+                });
+            }
+            
+            let reportRows = [], tongSLSP = 0, tongDoanhThu = 0;
+            const nvMap = Object.fromEntries(nhanVienData.map(n=>[n.MaNV, n.HoTen]));
+            const banMap = Object.fromEntries(banAnData.map(b=>[b.MaBan, b.TenBan]));
+            
+            for (let hd of filtered) {
+                const phieu = allPhieuData.find(p => p.MaPhieu === hd.MaPhieu);
+                const tenBan = phieu ? (banMap[phieu.MaBan] || phieu.MaBan) : hd.TenBan;
+                
+                if (hd.Items && hd.Items.length) {
+                    for (let item of hd.Items) {
+                        const mon = monAnData.find(m => m.MaMon === item.MaMon);
+                        if (dmFilter !== 'all' && mon?.MaDanhMuc !== dmFilter) continue;
+                        reportRows.push({
+                            maHD: hd.MaHD,
+                            thoiGian: hd.ThoiGianThanhToan,
+                            ban: tenBan,
+                            nhanVien: nvMap[hd.MaNV] || hd.MaNV,
+                            slsp: item.SoLuong,
+                            tenMon: mon?.TenMon || item.MaMon,
+                            doanhThu: item.SoLuong * item.DonGia
+                        });
+                        tongSLSP += item.SoLuong;
+                        tongDoanhThu += item.SoLuong * item.DonGia;
+                    }
+                }
+            }
+            
+            const titleDate = fromDate && toDate ? `TỪ ${fromDate} ĐẾN ${toDate}` : (fromDate ? `TỪ ${fromDate}` : (toDate ? `ĐẾN ${toDate}` : 'HÔM NAY'));
+            const dmName = dmFilter !== 'all' ? danhMucData.find(d=>d.MaDanhMuc===dmFilter)?.TenDanhMuc : 'TẤT CẢ';
+            const nvName = nvFilter !== 'all' ? nhanVienData.find(n=>n.MaNV===nvFilter)?.HoTen : 'TẤT CẢ';
+            const banName = banFilter !== 'all' ? banAnData.find(b=>b.MaBan===banFilter)?.TenBan : 'TẤT CẢ';
+            
+            let tableHtml = `
+                <div style="text-align:center; margin-bottom:20px;">
+                    <h2 style="color:#ea580c;">📊 BÁO CÁO DOANH THU</h2>
+                    <p>${titleDate}</p>
+                    <p>📂 Danh mục: ${dmName} | 👤 Nhân viên: ${nvName} | 🪑 Bàn: ${banName}</p>
+                    <p>Ngày lập: ${new Date().toLocaleString('vi-VN')}</p>
+                </div>
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead><tr style="background:#f1f5f9;"><th>Mã HD</th><th>Thời gian</th><th>Bàn</th><th>Nhân viên</th><th>SLSP</th><th>Món ăn</th><th>Doanh thu</th></tr></thead>
+                    <tbody>${reportRows.map(r => `<tr><td class="font-mono">${r.maHD}</td><td>${r.thoiGian||''}</td><td>${r.ban||''}</td><td>${r.nhanVien}</td><td class="text-center">${r.slsp}</td><td>${r.tenMon}</td><td class="text-right">${formatMoney(r.doanhThu)}</td></tr>`).join('')}
+                    ${reportRows.length === 0 ? '<tr><td colspan="7" class="text-center">📭 Không có dữ liệu phù hợp</td></tr>' : ''}</tbody>
+                    <tfoot><tr style="background:#f1f5f9;"><td colspan="5" class="text-right">TỔNG CỘNG:</td><td class="text-center">${tongSLSP}</td><td class="text-right font-bold">${formatMoney(tongDoanhThu)}</td></tr></tfoot>
+                </table>
+            `;
+            document.getElementById('reportContent').innerHTML = tableHtml;
+        }
+        
+        function printReport() {
+            const printContents = document.getElementById('reportContent').innerHTML;
+            const win = window.open('', '', 'width=1200,height=800');
+            win.document.write(`<html><head><title>Báo cáo doanh thu</title><style>body{font-family:Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}th{background:#f0f0f0}</style></head><body>${printContents}</body></html>`);
+            win.document.close();
+            win.print();
+        }
+        
+        // ========== TÀI KHOẢN ==========
+        function changeSelfPassword() {
+            const old = document.getElementById('oldPassword').value;
+            const newp = document.getElementById('newPasswordSelf').value;
+            const cf = document.getElementById('confirmPassword').value;
+            if (old !== '123456') { alert('Mật khẩu cũ sai!'); return; }
+            if (newp !== cf) { alert('Mật khẩu mới không khớp!'); return; }
+            alert('Đổi mật khẩu thành công!');
+        }
+        
+        // ========== CHAT AI ==========
+        function getAIChatReply(message) {
+            const msg = message.toLowerCase();
+            if (msg.includes('doanh thu') && (msg.includes('nhan vien') || msg.includes('nhân viên'))) {
+                const staffDoanhThu = {};
+                hoaDonData.forEach(hd => { staffDoanhThu[hd.MaNV] = (staffDoanhThu[hd.MaNV] || 0) + (hd.TongTien || 0); });
+                const topStaff = Object.entries(staffDoanhThu).sort((a,b)=>b[1]-a[1]);
+                if(topStaff.length > 0) return `💰 Nhân viên có doanh thu cao nhất: ${nhanVienData.find(n=>n.MaNV===topStaff[0][0])?.HoTen} - ${formatMoney(topStaff[0][1])}`;
+                return `💰 Chưa có dữ liệu doanh thu nhân viên`;
+            }
+            if (msg.includes('bán chạy')) return `🏆 Top món bán chạy đang hiển thị ở dashboard!`;
+            if (msg.includes('giờ cao điểm')) return `🔥 Giờ cao điểm nhất đang hiển thị ở dashboard!`;
+            return `🤖 Tôi có thể giúp:\n- Xem doanh thu theo nhân viên\n- Xem top món bán chạy/chậm\n- Xem giờ cao điểm\n- Xuất báo cáo`;
+        }
+        
+        function toggleChat() {
+            const w = document.getElementById('chatWindow');
+            w.style.display = w.style.display === 'flex' ? 'none' : 'flex';
+        }
+        
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            const chat = document.getElementById('chatMessages');
+            chat.innerHTML += `<div class="message-user"><span>${msg}</span></div>`;
+            input.value = '';
+            setTimeout(() => {
+                const reply = getAIChatReply(msg);
+                chat.innerHTML += `<div class="message-ai"><span>🤖 ${reply}</span></div>`;
+                chat.scrollTop = chat.scrollHeight;
+            }, 100);
+            chat.scrollTop = chat.scrollHeight;
+        }
+        
+        // ========== UTILITIES ==========
+        function refreshDashboard() {
+            loadDashboardStats();
+            updateRevenueChart();
+            updatePaymentMethodChart();
+            updateTopMon();
+            updateSlowMon();
+            updatePendingPhieu();
+            updateStaffRevenue();
+            updatePeakHourChart();
+            updateCategoryRevenueChart();
+            updateStoppedMon();
+        }
+        
+        function refreshCurrentPage() {
+            if (currentPage === 'dashboard') refreshDashboard();
+            else if (currentPage === 'monan') loadMonAn();
+            else if (currentPage === 'hoadon') loadHoaDon();
+            else if (currentPage === 'nhanvien') loadNhanVien();
+            else if (currentPage === 'ban') loadBanAn();
+            else if (currentPage === 'baocao') generateFullReport();
+        }
+        
+        function switchPage(page) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            const targetPage = document.getElementById(page + 'Page');
+            if (targetPage) targetPage.classList.remove('hidden');
+            
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            const activeItem = document.querySelector(`.sidebar-item[data-page="${page}"]`);
+            if (activeItem) activeItem.classList.add('active');
+            
+            const titles = {
+                dashboard: 'Tổng quan',
+                monan: 'Quản lý món ăn',
+                hoadon: 'Quản lý hóa đơn',
+                nhanvien: 'Quản lý nhân viên',
+                ban: 'Quản lý bàn',
+                baocao: 'Báo cáo doanh thu',
+                taikhoan: 'Tài khoản'
+            };
+            document.getElementById('pageTitle').innerText = titles[page] || page;
+            currentPage = page;
+            
+            if (page === 'dashboard') refreshDashboard();
+            if (page === 'monan') {
+                document.getElementById('filterCategory').innerHTML = '<option value="all">Tất cả</option>' + danhMucData.map(d => `<option value="${d.MaDanhMuc}">${d.TenDanhMuc}</option>`).join('');
+                loadMonAn();
+            }
+            if (page === 'hoadon') loadHoaDon();
+            if (page === 'nhanvien') loadNhanVien();
+            if (page === 'ban') loadBanAn();
+            if (page === 'baocao') generateFullReport();
+        }
+        
+        function showAddMonModal() {
+            document.getElementById('editMaMon').value = '';
+            document.getElementById('monTen').value = '';
+            document.getElementById('monDonGia').value = '';
+            document.getElementById('monMoTa').value = '';
+            document.getElementById('monTrangThai').value = 'Còn bán';
+            document.getElementById('monModalTitle').innerText = 'Thêm món ăn';
+            document.getElementById('monModal').classList.remove('hidden');
+        }
+        
+        function showAddBanModal() {
+            document.getElementById('editMaBan').value = '';
+            document.getElementById('banTen').value = '';
+            document.getElementById('banSoCho').value = 4;
+            document.getElementById('banTrangThai').value = 'Trống';
+            document.getElementById('banModalTitle').innerText = 'Thêm bàn ăn';
+            document.getElementById('banModal').classList.remove('hidden');
+        }
+        
+        function showAddNVModal() {
+            document.getElementById('nvHoTen').value = '';
+            document.getElementById('nvSDT').value = '';
+            document.getElementById('nvUsername').value = '';
+            document.getElementById('nvPassword').value = '123456';
+            document.getElementById('nvVaiTro').value = 'Nhân viên';
+            document.getElementById('nhanvienModal').classList.remove('hidden');
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+        
+        // ========== INIT ==========
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('vi-VN');
+        
+        document.querySelectorAll('.sidebar-item').forEach(i => {
+            i.addEventListener('click', () => switchPage(i.getAttribute('data-page')));
+        });
+        
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.getAttribute('data-filter');
+                refreshDashboard();
+            });
+        });
+        
+        document.getElementById('chatBubble')?.addEventListener('click', toggleChat);
+        document.getElementById('closeChat')?.addEventListener('click', toggleChat);
+        document.getElementById('sendChat')?.addEventListener('click', sendChatMessage);
+        document.getElementById('chatInput')?.addEventListener('keypress', e => { if (e.key === 'Enter') sendChatMessage(); });
+        
+        // Khởi chạy
+        loadAllData();
+        switchPage('dashboard');
+    </script>
+</body>
+</html>
